@@ -9,7 +9,8 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-media-recorder": "^1.7.1",
-    "react-scripts": "5.0.1"
+    "react-scripts": "5.0.1",
+    "web-vitals": "^4.2.4"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -38,5 +39,5 @@
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11"
   },
-  "proxy": "https://chatbot-api-b1jc.onrender.com/chatbot"
+  "proxy": "https://chatbot-api-b1jc.onrender.com"
 }

@@ -1,0 +1,23 @@
+.review-details-input {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 10px;
+}
+
+.star-rating {
+    display: flex;
+    gap: 5px;
+}
+
+.star-button {
+    background: none;
+    border: none;
+    font-size: 1.5em;
+    cursor: pointer;
+    color: #ffd700;
+}
+
+.star-button.filled {
+    color: #ffd700;
+}

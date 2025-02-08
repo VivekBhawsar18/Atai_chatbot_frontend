@@ -1,0 +1,43 @@
+.chatbot-conversation {
+    max-height: 400px;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.chatbot-message {
+    padding: 10px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+}
+
+.bot {
+    background-color: #f1f1f1;
+    color: black;
+}
+
+.user {
+    background-color: #007bff;
+    color: white;
+    align-self: flex-end;
+}
+
+.typing {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+.typing-indicator {
+    width: 6px;
+    height: 6px;
+    background-color: #007bff;
+    border-radius: 50%;
+    margin: 0 2px;
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    50% {
+        opacity: 0;
+    }
+}

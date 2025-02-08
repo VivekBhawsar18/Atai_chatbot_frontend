@@ -1,19 +1,22 @@
 import axios from 'axios';
 
-const apiBaseURL = 'https://chatbot-api-b1jc.onrender.com';
 
+// Define the base URL for your API
+const apiBaseURL = 'https://chatbot-api-b1jc.onrender.com'; // Ensure this is the correct URL for your deployed backend
+
+// Axios configuration for default headers
 const axiosConfig = {
     headers: {
         'Content-Type': 'application/json',
-        // 'Access-Control-Allow-Origin': '*',
     },
+    timeout: 20000, // Increase timeout to 10 seconds
 };
 
+// Function to initialize the conversation recording
 export const initRecordingConversation = async (userId) => {
     try {
         const response = await axios.post(`${apiBaseURL}/chatbot/init_recording_conversation`, { user_id: userId }, axiosConfig);
-        console.log("✅ Recording initialized:", response.data);
-        console.log(response.data);
+        console.log("✅ Recording initialized:", response);
         return response;
     } catch (error) {
         console.error("❌ Error initializing recording:", error.response?.data || error.message);
@@ -21,11 +24,11 @@ export const initRecordingConversation = async (userId) => {
     }
 };
 
+// Function to start the chat
 export const startChat = async (userId) => {
     try {
         const response = await axios.post(`${apiBaseURL}/chatbot/start_chat`, { user_id: userId }, axiosConfig);
-        console.log("✅ Start Chat API Response:", response.data);
-
+        console.log("✅ Start Chat API Response:", response);
         return response;
     } catch (error) {
         console.error("❌ Error starting chat:", error.response?.data || error.message);
@@ -33,31 +36,35 @@ export const startChat = async (userId) => {
     }
 };
 
+// Function to send a message
 export const sendMessage = async (userId, message) => {
     try {
-        console.log("Sending message:", message); // Debugging line
-        const response = await axios.post(`${apiBaseURL}/chatbot/handle_chat`, { user_id: userId, message }, axiosConfig);
-        console.log("✅ Message sent:", response.data);
-        return response;
+        console.log("Sending message:", { user_id: userId, message });
+        const response = await axios.post(`${apiBaseURL}/chatbot/handle_chat`, { user_id: userId, message: message }, axiosConfig);
+        console.log("✅ Message sent:", response);
+        return response.data;
     } catch (error) {
         console.error("❌ Error sending message:", error.response?.data || error.message);
         return { error: error.response?.data || error.message };
     }
 };
 
+// Function to submit user details
 export const submitUserDetails = async (userId, details) => {
     try {
-        const response = await axios.post(`${apiBaseURL}/chatbot/submit_details`, { user_id: userId, message: details }, axiosConfig);
+        const response = await axios.post(`${apiBaseURL}/chatbot/submit_details`, {
+            user_id: userId,
+            message: `${details.name},${details.number},${details.email}`
+        }, axiosConfig);
         console.log("✅ User details submitted:", response.data);
         return response;
     } catch (error) {
         console.error("❌ Error submitting details:", error.response?.data || error.message);
-
         return { error: error.response?.data || error.message };
-        // return { error: error };
     }
 };
 
+// Function to submit callback preference
 export const submitCallbackPreference = async (userId, preference) => {
     if (!userId) {
         console.error("❌ User ID is missing. Cannot submit callback preference.");
@@ -73,6 +80,7 @@ export const submitCallbackPreference = async (userId, preference) => {
     }
 };
 
+// Function to submit user satisfaction
 export const submitSatisfaction = async (userId, satisfaction) => {
     try {
         const response = await axios.post(`${apiBaseURL}/chatbot/submit_satisfaction`, { user_id: userId, message: satisfaction }, axiosConfig);
@@ -84,13 +92,14 @@ export const submitSatisfaction = async (userId, satisfaction) => {
     }
 };
 
-export const terminateChat = async (chatbotId) => {
-    if (!chatbotId) {
+// Function to terminate the chat
+export const terminateChat = async (userId) => {
+    if (!userId) {
         console.error("❌ Chatbot ID is missing. Cannot terminate chat.");
         return { error: "Chatbot ID is required." };
     }
     try {
-        const response = await axios.post(`${apiBaseURL}/chatbot/terminate`, { user_id: chatbotId }, axiosConfig);
+        const response = await axios.post(`${apiBaseURL}/chatbot/terminate`, { user_id: userId }, axiosConfig);
         return response;
     } catch (error) {
         console.error('❌ Error terminating chat:', error.response?.data || error.message);
@@ -98,9 +107,10 @@ export const terminateChat = async (chatbotId) => {
     }
 };
 
-export const handleTerminateResponse = async (userId, response) => {
+// Function to handle the terminate response
+export const handleTerminateResponse = async (userId, responseOption) => {
     try {
-        const apiResponse = await axios.post(`${apiBaseURL}/chatbot/terminate_response`, { user_id: userId, response }, axiosConfig);
+        const apiResponse = await axios.post(`${apiBaseURL}/chatbot/terminate_response`, { user_id: userId, response: responseOption }, axiosConfig);
         console.log("✅ Terminate Response API:", apiResponse.data);
         return apiResponse;
     } catch (error) {
@@ -109,6 +119,7 @@ export const handleTerminateResponse = async (userId, response) => {
     }
 };
 
+// Function to submit a query
 export const submitQuery = async (userId, query) => {
     try {
         const response = await axios.post(`${apiBaseURL}/chatbot/submit_query`, { user_id: userId, user_query: query }, axiosConfig);
@@ -120,6 +131,7 @@ export const submitQuery = async (userId, query) => {
     }
 };
 
+// Function to submit an audio query
 export const submitAudioQuery = async (formData) => {
     try {
         const response = await axios.post(`${apiBaseURL}/chatbot/submit_query`, formData, {
@@ -130,191 +142,135 @@ export const submitAudioQuery = async (formData) => {
         console.log("✅ Audio query submitted:", response.data);
         return response;
     } catch (error) {
-        console.error('Error submitting audio query:', error);
+        console.error('❌ Error submitting audio query:', error);
         return { error: error.response?.data || error.message };
     }
 };
 
 
 
-
-
-
-
-
-
-
-
-
 // import axios from 'axios';
 
-// // const apiBaseURL = 'https://atchatbot.pythonanywhere.com';
-// // const apiBaseURL = 'http://localhost:5000';
-// const apiBaseURL = 'https://chatbot-api-b1jc.onrender.com/chatbot';
+// const apiBaseURL = 'https://chatbot-api-b1jc.onrender.com';
 
 // const axiosConfig = {
 //     headers: {
 //         'Content-Type': 'application/json',
-//         'Access-Control-Allow-Origin': '*', // Allow all origins (development only)
+//         // 'Access-Control-Allow-Origin': '*',
 //     },
 // };
 
-// /**
-//  * Initializes recording for conversation
-//  */
 // export const initRecordingConversation = async (userId) => {
 //     try {
-//         const response = await axios.post(`${apiBaseURL}/init_recording_conversation`, { user_id: userId }, axiosConfig);
+//         const response = await axios.post(`${apiBaseURL}/chatbot/init_recording_conversation`, { user_id: userId }, axiosConfig);
 //         console.log("✅ Recording initialized:", response.data);
-//         return response.data;
+//         console.log(response.data);
+//         return response;
 //     } catch (error) {
 //         console.error("❌ Error initializing recording:", error.response?.data || error.message);
 //         return { error: error.response?.data || error.message };
 //     }
 // };
 
-// /**
-//  * Starts a chat session
-//  */
 // export const startChat = async (userId) => {
 //     try {
-//         const response = await axios.post(`${apiBaseURL}/start_chat`, { user_id: userId }, axiosConfig);
+//         const response = await axios.post(`${apiBaseURL}/chatbot/start_chat`, { user_id: userId }, axiosConfig);
 //         console.log("✅ Start Chat API Response:", response.data);
-//         if (response?.data) {
-//             return response.data;
-//         }
-//         throw new Error("Invalid response structure");
+
+//         return response;
 //     } catch (error) {
 //         console.error("❌ Error starting chat:", error.response?.data || error.message);
 //         return { error: error.response?.data || error.message };
 //     }
 // };
 
-// /**
-//  * Sends a message
-//  */
 // export const sendMessage = async (userId, message) => {
 //     try {
-//         const response = await axios.post(`${apiBaseURL}/handle_chat`, { user_id: userId, message: message }, axiosConfig);
+//         console.log("Sending message:", { user_id: userId, message }); // Debugging line
+//         const response = await axios.post(`${apiBaseURL}/chatbot/handle_chat`, { user_id: userId, message: message }, axiosConfig);
 //         console.log("✅ Message sent:", response.data);
-//         if (response?.data) {
-//             return response.data;
-//         }
-//         throw new Error("Invalid response structure");
+//         return response.data;
 //     } catch (error) {
 //         console.error("❌ Error sending message:", error.response?.data || error.message);
 //         return { error: error.response?.data || error.message };
 //     }
 // };
 
-// /**
-//  * Submits user details
-//  */
 // export const submitUserDetails = async (userId, details) => {
 //     try {
-//         const response = await axios.post(`${apiBaseURL}/submit_details`, { user_id: userId, message: details }, axiosConfig);
+//         const response = await axios.post(`${apiBaseURL}/chatbot/submit_details`,
+//             {
+//                 user_id: userId,
+//                 message: `${details.name},${details.number},${details.email}`
+//             },
+//             axiosConfig
+//         );
 //         console.log("✅ User details submitted:", response.data);
-//         if (response?.data) {
-//             return response.data;
-//         }
-//         throw new Error("Invalid response structure");
+//         return response;
 //     } catch (error) {
 //         console.error("❌ Error submitting details:", error.response?.data || error.message);
+
 //         return { error: error.response?.data || error.message };
+//         // return { error: error };
 //     }
 // };
 
-// /**
-//  * Submits callback preference
-//  */
 // export const submitCallbackPreference = async (userId, preference) => {
+//     if (!userId) {
+//         console.error("❌ User ID is missing. Cannot submit callback preference.");
+//         return { error: "User ID is required." };
+//     }
 //     try {
-//         const response = await axios.post(`${apiBaseURL}/submit_callback_preference`, { user_id: userId, message: preference }, axiosConfig);
+//         const response = await axios.post(`${apiBaseURL}/chatbot/submit_callback_preference`, { user_id: userId, message: preference }, axiosConfig);
 //         console.log("✅ Callback preference submitted:", response.data);
-//         if (response?.data) {
-//             return response.data;
-//         }
-//         throw new Error("Invalid response structure");
+//         return response;
 //     } catch (error) {
 //         console.error("❌ Error submitting callback preference:", error.response?.data || error.message);
 //         return { error: error.response?.data || error.message };
 //     }
 // };
 
-// /**
-//  * Submits user satisfaction
-//  */
 // export const submitSatisfaction = async (userId, satisfaction) => {
 //     try {
-//         const response = await axios.post(`${apiBaseURL}/submit_satisfaction`, { user_id: userId, message: satisfaction }, axiosConfig);
+//         const response = await axios.post(`${apiBaseURL}/chatbot/submit_satisfaction`, { user_id: userId, message: satisfaction }, axiosConfig);
 //         console.log("✅ Satisfaction submitted:", response.data);
-//         if (response?.data) {
-//             return response.data;
-//         }
-//         throw new Error("Invalid response structure");
+//         return response;
 //     } catch (error) {
 //         console.error("❌ Error submitting satisfaction:", error.response?.data || error.message);
 //         return { error: error.response?.data || error.message };
 //     }
 // };
 
-// /**
-//  * Terminates chat session
-//  */
-// // export const terminateChat = async (chatbotId) => {
-// //     try {
-// //         const response = await axios.post(`${apiBaseURL}/terminate`, { user_id: chatbotId }, axiosConfig);
-// //         console.log("✅ Termination Response:", response.data);
-// //         if (response?.data) {
-// //             return response.data;
-// //         }
-// //         throw new Error("Invalid response structure");
-// //     } catch (error) {
-// //         console.error("❌ Error terminating chat:", error.response?.data || error.message);
-// //         return { error: error.response?.data || error.message };
-// //     }
-// // };
-
-// export const terminateChat = async (chatbotId) => {
+// export const terminateChat = async (userId) => {
+//     if (!userId) {
+//         console.error("❌ Chatbot ID is missing. Cannot terminate chat.");
+//         return { error: "Chatbot ID is required." };
+//     }
 //     try {
-//         const response = await axios.post(`https://chatbot-api-b1jc.onrender.com/chatbot/terminate`, { user_id: chatbotId });
-//         return response.data;
+//         const response = await axios.post(`${apiBaseURL}/chatbot/terminate`, { user_id: userId }, axiosConfig);
+//         return response;
 //     } catch (error) {
-//         console.error('❌ Error terminating chat:', error);
-//         throw error;
+//         console.error('❌ Error terminating chat:', error.response?.data || error.message);
+//         return { error: error.response?.data || error.message };
 //     }
 // };
 
-
-// /**
-//  * Handles terminate chat response (Y/N)
-//  */
-// export const handleTerminateResponse = async (userId, response) => {
+// export const handleTerminateResponse = async (userId, responseOption) => {
 //     try {
-//         const apiResponse = await axios.post(`${apiBaseURL}/terminate_response`, { user_id: userId, response }, axiosConfig);
+//         const apiResponse = await axios.post(`${apiBaseURL}/chatbot/terminate_response`, { user_id: userId, response: responseOption }, axiosConfig);
 //         console.log("✅ Terminate Response API:", apiResponse.data);
-
-//         if (apiResponse?.data) {
-//             return apiResponse.data;
-//         }
-//         throw new Error("Invalid response structure");
+//         return apiResponse;
 //     } catch (error) {
 //         console.error("❌ Error sending terminate response:", error.response?.data || error.message);
 //         return { error: error.response?.data || error.message };
 //     }
 // };
 
-// /**
-//  * Submits user query
-//  */
 // export const submitQuery = async (userId, query) => {
 //     try {
-//         const response = await axios.post(`${apiBaseURL}/submit_query`, { user_id: userId, user_query: query }, axiosConfig);
+//         const response = await axios.post(`${apiBaseURL}/chatbot/submit_query`, { user_id: userId, user_query: query }, axiosConfig);
 //         console.log("✅ Query submitted:", response.data);
-//         if (response?.data) {
-//             return response.data;
-//         }
-//         throw new Error("Invalid response structure");
+//         return response;
 //     } catch (error) {
 //         console.error("❌ Error submitting query:", error.response?.data || error.message);
 //         return { error: error.response?.data || error.message };
@@ -323,62 +279,15 @@ export const submitAudioQuery = async (formData) => {
 
 // export const submitAudioQuery = async (formData) => {
 //     try {
-//         const response = await axios.post(`https://chatbot-api-b1jc.onrender.com/chatbot/submit_query`, formData, {
+//         const response = await axios.post(`${apiBaseURL}/chatbot/submit_query`, formData, {
 //             headers: {
 //                 'Content-Type': 'multipart/form-data',
 //             },
 //         });
-//         return response.data;
+//         console.log("✅ Audio query submitted:", response.data);
+//         return response;
 //     } catch (error) {
 //         console.error('Error submitting audio query:', error);
-//         throw error;
+//         return { error: error.response?.data || error.message };
 //     }
 // };
-
-
-
-
-// // export const submitAudioQuery = async (chatbotId, audioFile) => {
-// //     const formData = new FormData();
-// //     formData.append("user_id", chatbotId);
-// //     formData.append("audio_file", audioFile);
-
-// //     try {
-// //         const response = await axios.post(`${apiBaseURL}/submit_query`, {
-// //             method: "POST",
-// //             body: formData,
-// //         });
-
-// //         const data = await response.json();
-// //         if (!response.ok) {
-// //             throw new Error(data.message || "Failed to submit audio query");
-// //         }
-
-// //         return data;
-// //     } catch (error) {
-// //         console.error("Error submitting audio query:", error);
-// //         throw error;
-// //     }
-// // };
-
-
-// /**
-//  * Uploads audio file as user query
-//  */
-// // export const submitAudioQuery = async (formData) => {
-// //     try {
-// //         const response = await axios.post(`${apiBaseURL}/submit_audio_query`, formData, {
-// //             headers: {
-// //                 'Content-Type': 'multipart/form-data',
-// //             },
-// //         });
-// //         console.log("✅ Audio query submitted:", response.data);
-// //         if (response?.data) {
-// //             return response.data;
-// //         }
-// //         throw new Error("Invalid response structure");
-// //     } catch (error) {
-// //         console.error("❌ Error submitting audio query:", error.response?.data || error.message);
-// //         return { error: error.response?.data || error.message };
-// //     }
-// // };

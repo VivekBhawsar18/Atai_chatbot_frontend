@@ -1,0 +1,29 @@
+.query-submission {
+    display: flex;
+    flex-direction: column;
+    margin: 10px;
+}
+
+.query-input-container {
+    display: flex;
+    align-items: center;
+}
+
+.input-icons {
+    display: flex;
+    gap: 5px;
+}
+
+.mic-button,
+.send-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.2em;
+    color: #007bff;
+}
+
+.mic-button:hover,
+.send-button:hover {
+    color: #0056b3;
+}
