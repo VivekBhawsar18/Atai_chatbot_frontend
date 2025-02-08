@@ -9,7 +9,7 @@ const axiosConfig = {
     headers: {
         'Content-Type': 'application/json',
     },
-    timeout: 20000, // Increase timeout to 10 seconds
+
 };
 
 // Function to initialize the conversation recording
@@ -38,9 +38,11 @@ export const startChat = async (userId) => {
 
 // Function to send a message
 export const sendMessage = async (userId, message) => {
+
     try {
         console.log("Sending message:", { user_id: userId, message });
         const response = await axios.post(`${apiBaseURL}/chatbot/handle_chat`, { user_id: userId, message: message }, axiosConfig);
+
         console.log("✅ Message sent:", response);
         return response.data;
     } catch (error) {
@@ -49,18 +51,33 @@ export const sendMessage = async (userId, message) => {
     }
 };
 
-// Function to submit user details
+//Function to submit user details
+// export const submitUserDetails = async (userId, details) => {
+//     try {
+
+//         const response = await axios.post(`${apiBaseURL}/chatbot/submit_details`, {
+//             user_id: userId,
+//             message: details
+//         }, axiosConfig);
+//         console.log("✅ User details submitted:", response);
+//         return response;
+//     } catch (error) {
+//         console.error("❌ Error submitting details:", error.response?.data || error.message);
+//         return { error: error.response?.data || error.message };
+//     }
+// };
+
+
 export const submitUserDetails = async (userId, details) => {
     try {
-        const response = await axios.post(`${apiBaseURL}/chatbot/submit_details`, {
-            user_id: userId,
-            message: `${details.name},${details.number},${details.email}`
-        }, axiosConfig);
+        const response = await axios.post(`${apiBaseURL}/chatbot/submit_details`, { user_id: userId, message: details }, axiosConfig);
         console.log("✅ User details submitted:", response.data);
         return response;
     } catch (error) {
         console.error("❌ Error submitting details:", error.response?.data || error.message);
+
         return { error: error.response?.data || error.message };
+        // return { error: error };
     }
 };
 
@@ -108,7 +125,7 @@ export const terminateChat = async (userId) => {
 };
 
 // Function to handle the terminate response
-export const handleTerminateResponse = async (userId, responseOption) => {
+export const terminateResponse = async (userId, responseOption) => {
     try {
         const apiResponse = await axios.post(`${apiBaseURL}/chatbot/terminate_response`, { user_id: userId, response: responseOption }, axiosConfig);
         console.log("✅ Terminate Response API:", apiResponse.data);
@@ -131,23 +148,18 @@ export const submitQuery = async (userId, query) => {
     }
 };
 
-// Function to submit an audio query
-export const submitAudioQuery = async (formData) => {
+// Function to send audio to backend
+export const submitAudioQuery = async (audioData) => {
     try {
-        const response = await axios.post(`${apiBaseURL}/chatbot/submit_query`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
+        const response = await axios.post(`${apiBaseURL}/chatbot/convert_audio`, audioData, {
+            headers: { "Content-Type": "multipart/form-data" },
         });
-        console.log("✅ Audio query submitted:", response.data);
-        return response;
+        return response.data;  // Returns transcribed text
     } catch (error) {
-        console.error('❌ Error submitting audio query:', error);
-        return { error: error.response?.data || error.message };
+        console.error("Error converting audio:", error);
+        return { error: "Failed to process audio" };
     }
 };
-
-
 
 // import axios from 'axios';
 
