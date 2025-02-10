@@ -83,20 +83,33 @@ const Chatbot = () => {
                 const response = await startChat(newId);
                 console.log("Start Chat Response:", response);
 
-                const initialOptions = ["Our Services", "Book A Demo"];
-                setOptions(initialOptions);
-
                 const initialMessage = Array.isArray(response.data.message)
                     ? response.data.message.join(' ')
                     : response.data.message;
-                addToConversation(initialMessage);
-                addToConversation("Choose an option:", true, initialOptions);
+                setConversation(prev => [
+                    ...prev,
+                    { text: initialMessage, isBot: true }
+                ]);
+
+                const initialOptions = ["Our Services", "Book A Demo"];
+                setOptions(initialOptions);
+                setConversation(prev => [
+                    ...prev,
+                    { text: "Choose an option:", isBot: true, options: initialOptions }
+                ]);
             } catch (error) {
                 console.error("Error starting chatbot:", error);
+                setConversation(prev => [
+                    ...prev,
+                    { text: 'Error starting the chatbot. Please try again later.', isBot: true }
+                ]);
             }
             setIsOpen(true); // Open the chatbot
+        } else {
+            console.log("Chatbot is already open.");
         }
     };
+
 
     const handleClose = async () => {
         try {
@@ -111,15 +124,83 @@ const Chatbot = () => {
         }
     };
 
+    // const handleOptionClick = async (option) => {
+    //     try {
+    //         console.log("Selected Option:", option);
+
+    //         if (option === "Y" || option === "N") {
+    //             await handleTerminateResponse(option);
+    //             return;
+    //         }
+
+    //         setIsTyping(true);
+    //         const response = await sendMessage(chatbotId, option.trim());
+    //         setIsTyping(false);
+    //         console.log("🔥 API Response:", response);
+
+    //         if (response?.error) {
+    //             console.error("❌ Server Error:", response.error);
+    //             setConversation((prev) => [
+    //                 ...prev,
+    //                 { text: "Invalid choice. Please select a valid option.", isBot: true, options: [] },
+    //             ]);
+    //             return;
+    //         }
+
+    //         // ✅ Remove previous options properly before setting new ones
+    //         setOptions([]);
+
+    //         // ✅ Handle "Our Services" selection
+    //         if (option === "Our Services" && response.options?.length > 0) {
+    //             console.log("📌 Received Service Options:", response.options);
+
+    //             setConversation((prev) => [
+    //                 ...prev.filter(msg => msg?.options && msg.options.length === 0), // ✅ Prevent undefined errors
+    //                 { text: "Here are our services:", isBot: true },
+    //                 { text: "Please select a service:", isBot: true, options: response.options },
+    //             ]);
+
+    //             setOptions(response.options);
+    //             return;
+    //         }
+
+    //         // ✅ Handle "Book A Demo" selection
+    //         if (option === "Book A Demo") {
+    //             setConversation((prev) => [
+    //                 ...prev.filter(msg => msg?.options && msg.options.length === 0), // ✅ Prevent undefined errors
+    //                 { text: "Kindly provide your details to help us provide you the best service:", isBot: true },
+    //                 { text: "Please provide your name.", isBot: true },
+    //             ]);
+    //             setCurrentStep(1);
+    //             return;
+    //         }
+
+    //         // ✅ Default case: Show backend message and options if available
+    //         setConversation((prev) => [
+    //             ...prev.filter(msg => msg?.options && msg.options.length === 0), // ✅ Prevent undefined errors
+    //             { text: response.message, isBot: true, options: response.options || [] },
+    //         ]);
+
+    //         if (response.options?.length > 0) {
+    //             setOptions(response.options);
+    //         }
+
+    //     } catch (error) {
+    //         console.error("❌ Error handling option:", error);
+    //     }
+    // };
+
+
+
     const handleOptionClick = async (option) => {
         try {
+            console.log("Selected Option:", option);
 
             if (option === "Y" || option === "N") {
-                const terminateResponse = await handleTerminateResponse(chatbotId, option);
-                addToConversation(terminateResponse.message);
+                await handleTerminateResponse(option);
+                return;
             }
 
-            console.log("Selected Option:", option);
             setIsTyping(true);
             const response = await sendMessage(chatbotId, option.trim());
             setIsTyping(false);
@@ -134,9 +215,13 @@ const Chatbot = () => {
                 return;
             }
 
-            // ✅ If "Our Services" is selected, show service list
+            // ✅ Clear previous options properly before setting new ones
+            setOptions([]);
+            await new Promise(resolve => setTimeout(resolve, 50)); // Ensure state update
+
+            // ✅ Handle "Our Services" selection properly
             if (option === "Our Services" && response.options?.length > 0) {
-                setOptions(response.options); // Ensure options are set
+                setOptions(response.options); // Ensure options are set only once
                 setConversation((prev) => [
                     ...prev,
                     { text: "Here are our services:", isBot: true },
@@ -145,9 +230,7 @@ const Chatbot = () => {
                 return;
             }
 
-
-
-            // ✅ If "Book A Demo" is selected, immediately ask for details
+            // ✅ Handle "Book A Demo" selection
             if (option === "Book A Demo") {
                 setConversation((prev) => [
                     ...prev,
@@ -158,7 +241,7 @@ const Chatbot = () => {
                 return;
             }
 
-            // ✅ If asking for timeline (Only for "Our Services" flow)
+            // ✅ Handle timeline prompt
             if (response.message === "When do you wish to start?") {
                 setConversation((prev) => [
                     ...prev,
@@ -168,38 +251,27 @@ const Chatbot = () => {
                 return;
             }
 
-            // ✅ If asking for user details, automatically request name
+            // ✅ Handle user details prompt
             if (response.message === "Kindly provide your details to help us provide you the best service:") {
                 setConversation((prev) => [
                     ...prev,
                     { text: response.message, isBot: true },
                     { text: "Please provide your name.", isBot: true }, // ✅ Start user details input immediately
                 ]);
-                setCurrentStep(1); // Start details submission
+                setCurrentStep(1);
                 return;
             }
 
-            // ✅ If asking for callback preference
-            if (response.message === "Please choose your callback preference:") {
-                setConversation((prev) => [
-                    ...prev,
-                    { text: response.message, isBot: true, options: ["Phone Call", "Email"] },
-                ]);
-                setCurrentStep(4); // Move to callback step
-                return;
-            }
-
-            // ✅ If asking for ratings
-            if (response.message === "Please give us a rating:") {
+            //Handle Callback preference prompt
+            if (response.message === "Request a Call Back") {
                 setConversation((prev) => [
                     ...prev,
                     { text: response.message, isBot: true },
+                    { text: "", isBot: true, options: ["Yes", "No"] }
                 ]);
-                setCurrentStep(5); // Move to ratings step
                 return;
             }
-
-            // ✅ Default case: Show backend message
+            // ✅ Default case: Show backend message and options if available
             setConversation((prev) => [
                 ...prev,
                 { text: response.message, isBot: true, options: response.options || [] },
@@ -210,38 +282,49 @@ const Chatbot = () => {
         }
     };
 
-    const handleTerminateResponse = async (response) => {
+
+
+    const handleTerminateResponse = async (responseOption) => {
         try {
-            console.log("User termination response:", response);
-
-            // Call the backend to process the termination response
-            const apiResponse = await terminateResponse(chatbotId, response);
-            console.log("🔥 Termination API Response:", apiResponse);
-
-            if (apiResponse?.error) {
-                console.error("❌ Server Error:", apiResponse.error);
-                setConversation((prev) => [
-                    ...prev,
-                    { text: "Something went wrong. Please try again later.", isBot: true },
-                ]);
-                return;
+            if (!chatbotId) {
+                throw new Error("No active session to terminate.");
             }
 
-            // ✅ Use the backend response message dynamically
+            console.log("User termination response:", responseOption);
+
+            // Call the backend to process the termination response
+            const apiResponse = await terminateResponse(chatbotId, responseOption);
+
+            if (!apiResponse || !apiResponse.data) {
+                throw new Error("No response from server.");
+            }
+
+            console.log("✅ Terminate Response API:", apiResponse.data);
+
             setConversation((prev) => [
                 ...prev,
-                { text: apiResponse.message, isBot: true }, // Message from backend
+                { text: responseOption, isBot: false, isUser: true }, // User's response
+                { text: apiResponse.data.message || "Unexpected response from server.", isBot: true }, // Backend response
             ]);
 
+            // ✅ Auto-disable chatbot if termination message is received
+            if (apiResponse.data.message.includes("Thank you for using our service")) {
+                setTimeout(() => {
+                    setIsOpen(false); // Close chatbot UI
+                    setDisabledOptions(new Set()); // Disable options
+                    setConversation([]); // Clear chat history
+                    console.log("✅ Chatbot has been disabled.");
+                }, 3000); // Delay for smooth transition
+            }
+
         } catch (error) {
-            console.error("❌ Error handling termination response:", error);
+            console.error("❌ Error sending terminate response:", error.message);
             setConversation((prev) => [
                 ...prev,
-                { text: "Error processing your request. Please try again.", isBot: true },
+                { text: error.message || "An unexpected error occurred. Please try again later.", isBot: true },
             ]);
         }
     };
-
 
     const handleSubmitDetails = async (detail) => {
         let updatedDetails = { ...userDetails };
@@ -310,71 +393,175 @@ const Chatbot = () => {
                     ...prev,
                     { text: currentQuery, isBot: false, isUser: true },//Replay user's query
                     { text: "Thank you for providing your details. Your query has been registered.", isBot: true },
+                    { text: "Request a Call Back?", isBot: true, options: ["Yes", "No"] }
 
                 ]);
-
-
-                setOptions([]); // Clear options for the callback preference step
+                setOptions([]);
                 setCurrentStep(4); // Move to callback preference step
             } catch (error) {
                 console.error('Error sending user details:', error);
-                // setConversation((prev) => [
-                //     ...prev,
-                //     { text: error.message || 'An unexpected error occurred. Please try again later.', isBot: true },
-                // ]);
+                setConversation((prev) => [
+                    ...prev,
+                    { text: error.message || 'An unexpected error occurred. Please try again later.', isBot: true },
+                ]);
             }
         }
         setUserDetails(updatedDetails);
     };
 
 
+    // const handleSubmitCallbackPreference = async (preference) => {
+    //     try {
+    //         await submitCallbackPreference(chatbotId, preference);
+    //         setConversation((prev) => [
+    //             ...prev,
+    //             { text: 'Callback preference submitted successfully.', isBot: true, options: [] },
+    //             { text: "Please give us a Ratings(*).", isBot: true },
+    //         ]);
+    //         setCurrentStep(5);
+    //     } catch (error) {
+    //         console.error('Error submitting callback preference:', error);
+    //         setConversation((prev) => [
+    //             ...prev,
+    //             { text: 'Error submitting callback preference. Please try again later.', isBot: true, options: [] },
+    //         ]);
+    //     }
+    // };
+
+    // const handleSubmitCallbackPreference = async (preference) => {
+    //     try {
+    //         const response = await submitCallbackPreference(chatbotId, preference);
+
+    //         if (response?.data?.message) {
+    //             setConversation(prev => [...prev, { text: response.data.message, isBot: true }]);
+    //             setOptions([]);
+    //             setCurrentStep(5);
+    //         } else {
+    //             setConversation(prev => [...prev, { text: "Error submitting callback preference. Please try again.", isBot: true }]);
+    //         }
+    //     } catch (error) {
+    //         console.error("Error submitting callback preference:", error);
+    //         setConversation(prev => [...prev, { text: "Error submitting callback preference. Please try again.", isBot: true }]);
+    //     }
+    // };
+
+    // const handleSubmitCallbackPreference = async (preference) => {
+    //     try {
+
+    //         // Send user preference (Yes/No) to the backend
+    //         const response = await submitCallbackPreference(chatbotId, preference);
+
+    //         if (response?.data?.message) {
+    //             // Update chat with user response
+    //             setConversation(prev => [
+    //                 ...prev,
+    //                 { text: preference, isBot: false }, // User message
+    //                 { text: response.data.message, isBot: true } // Bot response from API
+    //             ]);
+
+    //             // Remove the Yes/No options after selection
+    //             setOptions([]);
+    //             setCurrentStep(5);
+
+    //         } else {
+    //             // Handle case where no valid response is received from API
+    //             setConversation(prev => [
+    //                 ...prev,
+    //                 { text: "⚠️ Error submitting callback preference. Please try again.", isBot: true }
+    //             ]);
+    //         }
+    //     } catch (error) {
+    //         console.error("❌ Error submitting callback preference:", error);
+
+    //         setConversation(prev => [
+    //             ...prev,
+    //             { text: "⚠️ Network error. Please try again later.", isBot: true }
+    //         ]);
+    //     }
+    // };
+
+    // const handleSubmitCallbackPreference = async (preference) => {
+    //     try {
+    //         setOptions([]); // ✅ Clear buttons immediately
+    //         const response = await submitCallbackPreference(chatbotId, preference);
+
+    //         if (response?.data?.message) {
+    //             setConversation(prev => [...prev, { text: response.data.message, isBot: true }]);
+    //         } else {
+    //             setConversation(prev => [...prev, { text: "Error submitting callback preference. Please try again.", isBot: true }]);
+    //         }
+    //     } catch (error) {
+    //         console.error("Error submitting callback preference:", error);
+    //         setConversation(prev => [...prev, { text: "Error submitting callback preference. Please try again.", isBot: true }]);
+    //     }
+    // };
+
     const handleSubmitCallbackPreference = async (preference) => {
+        console.log("Submitting preference:", preference); // ✅ Debug API request
+
         try {
-            await submitCallbackPreference(chatbotId, preference);
-            setConversation((prev) => [
-                ...prev,
-                { text: 'Callback preference submitted successfully.', isBot: true, options: [] },
-                { text: "Please give us a Ratings(*).", isBot: true },
-            ]);
-            setCurrentStep(5);
+            // ✅ Ensure chatbot processes only "Yes" or "No"
+            if (preference !== "Yes" && preference !== "No") {
+                console.error("Invalid preference sent:", preference);
+                return;
+            }
+
+            const response = await submitCallbackPreference(chatbotId, preference);
+
+            if (response?.data?.message) {
+                setConversation(prev => [...prev, { text: response.data.message, isBot: true }]);
+            } else {
+                setConversation(prev => [...prev, { text: "Error submitting callback preference. Please try again.", isBot: true }]);
+            }
         } catch (error) {
-            console.error('Error submitting callback preference:', error);
-            setConversation((prev) => [
-                ...prev,
-                { text: 'Error submitting callback preference. Please try again later.', isBot: true, options: [] },
-            ]);
+            console.error("Error submitting callback preference:", error);
+            setConversation(prev => [...prev, { text: "Error submitting callback preference. Please try again.", isBot: true }]);
         }
     };
+
 
     const handleReviewSubmit = async (detail, isSatisfaction = false) => {
         let updatedReviewDetails = { ...userSatisfaction };
 
         if (currentStep === 5 && isSatisfaction) {
             updatedReviewDetails.satisfactionLevel = detail;
+
             const fullStars = Math.floor(detail);
             const hasHalfStar = detail % 1 !== 0;
             const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
-
             const visualStars = '★'.repeat(fullStars) + (hasHalfStar ? '★' : '') + '☆'.repeat(emptyStars);
 
             setConversation((prev) => [
                 ...prev,
                 { text: `Ratings: ${visualStars} (${detail}/5)`, isBot: false, isUser: true },
-                { text: 'Thank you for providing ratings(*) .', isBot: true },
             ]);
 
-            setOptions([]);
-            setIsRatingDisabled(true);
+            setOptions([]); // Disable options after submission
+            setIsRatingDisabled(true); // Disable the rating submission
 
             try {
-                await submitSatisfaction(chatbotId, updatedReviewDetails.satisfactionLevel);
+                // Send satisfaction level to backend
+                const response = await submitSatisfaction(chatbotId, String(updatedReviewDetails.satisfactionLevel));
+
+                if (response?.data?.message) {
+                    setConversation((prev) => [
+                        ...prev,
+                        { text: response.data.message, isBot: true }, // ✅ Backend message displayed
+                    ]);
+                }
             } catch (error) {
                 console.error('Error submitting satisfaction:', error);
+                setConversation((prev) => [
+                    ...prev,
+                    { text: "Error submitting satisfaction. Please try again later.", isBot: true }
+                ]);
             }
 
             setUserSatisfaction(updatedReviewDetails);
         }
     };
+
+
 
     const handleQuerySubmit = async () => {
         if (!currentQuery.trim() || isQueryDisabled) return;
@@ -524,9 +711,9 @@ const Chatbot = () => {
                     {currentStep > 0 && currentStep <= 3 && (
                         <UserDetailsInput currentStep={currentStep} handleSubmitDetails={handleSubmitDetails} />
                     )}
-                    {currentStep === 4 && !conversation.some(item => item.text === 'Your Callback Preference Submitted') && (
-                        <CallbackPreference handleSubmitCallbackPreference={handleSubmitCallbackPreference} />
-                    )}
+
+                    {currentStep === 4 && <CallbackPreference handleSubmitCallbackPreference={handleSubmitCallbackPreference} />}
+
                     {currentStep === 5 && !isRatingDisabled && (
                         <StarRating
                             currentSliderValue={currentSliderValue}
