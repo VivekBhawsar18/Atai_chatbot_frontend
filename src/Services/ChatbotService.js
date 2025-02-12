@@ -74,18 +74,6 @@ export const submitUserDetails = async (userId, details) => {
 };
 
 
-// export const submitUserDetails = async (userId, details) => {
-//     try {
-//         const response = await axios.post(`${apiBaseURL}/chatbot/submit_details`, { user_id: userId, ...details }, axiosConfig);
-//         console.log("✅ User details submitted:", response);
-//         return response;
-//     } catch (error) {
-//         console.error("❌ Error submitting details:", error.response?.data || error.message);
-
-//         return { error: error.response?.data || error.message };
-//         // return { error: error };
-//     }
-// };
 
 // Function to submit callback preference
 export const submitCallbackPreference = async (userId, preference) => {
@@ -133,10 +121,10 @@ export const submitSatisfaction = async (userId, satisfaction) => {
 
 // Function to terminate the chat
 export const terminateChat = async (userId) => {
-    if (!userId) {
-        console.error("❌ Chatbot ID is missing. Cannot terminate chat.");
-        return { error: "Chatbot ID is required." };
-    }
+    // if (!userId) {
+    //     console.error("❌ Chatbot ID is missing. Cannot terminate chat.");
+    //     return { error: "Chatbot ID is required." };
+    // }
     try {
         const response = await axios.post(`${apiBaseURL}/chatbot/terminate`, { user_id: userId }, axiosConfig);
         return response;
@@ -158,11 +146,65 @@ export const terminateResponse = async (userId, responseOption) => {
     }
 };
 
-// Function to submit a query
-export const submitQuery = async (userId, query) => {
+
+// export const submitQuery = async (userId, query, formData) => {
+//     try {
+//         const response = await axios.post(`${apiBaseURL}/chatbot/submit_query`, formData, {
+//             headers: {
+//                 "Content-Type": "multipart/form-data",
+//                 "user_id": userId
+//             },
+//         });
+
+//         console.log("Response from submitQuery:", response);
+//         return response.data;
+//     } catch (error) {
+//         console.error("Error submitting query:", error);
+//         throw error;
+//     }
+// };
+
+
+// export const submitQuery = async (userId, query = "", audioFile = null) => {
+//     try {
+//         const formData = new FormData();
+//         formData.append("user_id", userId);
+//         formData.append("user_query", query || ""); // Ensure query is always sent
+
+//         if (audioFile) {
+//             formData.append("audio_file", audioFile, "audio.wav"); // Send audio if available
+//         }
+
+//         const response = await axios.post(`${apiBaseURL}/chatbot/submit_query`, formData, {
+//             headers: { "Accept": "application/json" }, // No need to set Content-Type
+//         });
+
+//         console.log("✅ Query submitted successfully:", response.data);
+//         return response.data;
+//     } catch (error) {
+//         console.error("❌ Error submitting query:", error.response?.data || error.message);
+//         return { error: error.response?.data || error.message };
+//     }
+// };
+
+export const submitQuery = async (userId, query = "", audioFile = null) => {
     try {
-        const response = await axios.post(`${apiBaseURL}/chatbot/submit_query`, { user_id: userId, user_query: query }, axiosConfig);
-        console.log("✅ Query submitted:", response.data);
+        if (!userId) throw new Error("❌ User ID is required"); // Ensure user_id exists
+
+        const formData = new FormData();
+        formData.append("user_id", userId);
+        formData.append("user_query", query || ""); // Ensure query is always sent
+
+        if (audioFile) {
+            formData.append("file", audioFile, "audio.wav"); // Ensure correct format
+        }
+        console.log("🚀 Sending request to API with userId:", userId);
+
+        const response = await axios.post(`${apiBaseURL}/chatbot/submit_query`, formData, {
+            headers: { "Accept": "application/json" }, // Do not manually set Content-Type
+        });
+
+        console.log("✅ Query submitted successfully:", response);
         return response;
     } catch (error) {
         console.error("❌ Error submitting query:", error.response?.data || error.message);
@@ -170,19 +212,28 @@ export const submitQuery = async (userId, query) => {
     }
 };
 
-// Function to send audio to backend
-export const submitAudioQuery = async (audioData) => {
+export const convertAudio = async (userId, audioFile) => {
     try {
-        const response = await axios.post(`${apiBaseURL}/chatbot/convert_audio`, audioData, {
-            headers: { "Content-Type": "multipart/form-data" },
+        if (!userId) throw new Error("❌ User ID is required");
+        if (!audioFile) throw new Error("❌ Audio file is required");
+
+        const formData = new FormData();
+        formData.append("user_id", userId);  // ✅ Send user ID
+        formData.append("file", audioFile, "audio.wav");  // ✅ Send audio file
+
+        console.log("🎤 Sending audio file for conversion...");
+
+        const response = await axios.post(`${apiBaseURL}/convert_audio`, formData, {
+            headers: { "Accept": "application/json" },  // Don't set Content-Type manually
         });
-        return response.data;  // Returns transcribed text
+
+        console.log("✅ Transcribed Text:", response);
+        return response;
     } catch (error) {
-        console.error("Error converting audio:", error);
-        return { error: "Failed to process audio" };
+        console.error("❌ Error converting audio:", error.response?.data || error.message);
+        return { error: error.response?.data || error.message };
     }
 };
-
 
 
 // import axios from 'axios';
