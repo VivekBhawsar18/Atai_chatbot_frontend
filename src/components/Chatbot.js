@@ -10,7 +10,6 @@ import {
     terminateResponse,
     submitQuery,
     convertAudio
-
 } from "../Services/ChatbotService"; // Ensure the path is correct
 
 import ChatbotHeader from './ChatbotHeader';
@@ -32,7 +31,6 @@ const Chatbot = () => {
         return storedId || "";
     });
     const [options, setOptions] = useState([]);
-    // const [conversation, setConversation] = useState([]);
     const [conversation, setConversation] = useState(() => {
         const storedConversation = localStorage.getItem("chatbotConversation");
         return storedConversation ? JSON.parse(storedConversation) : [];
@@ -47,6 +45,7 @@ const Chatbot = () => {
     const [isQueryDisabled, setIsQueryDisabled] = useState(false);
     const [isRatingDisabled, setIsRatingDisabled] = useState(false);
     const [isTyping, setIsTyping] = useState(false);
+
     const conversationEndRef = useRef(null);
 
     useEffect(() => {
@@ -63,10 +62,13 @@ const Chatbot = () => {
         }
     }, [userId]);
 
-
     useEffect(() => {
         conversationEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [conversation]);
+
+    const saveChatHistory = (messages) => {
+        localStorage.setItem("chatHistory", JSON.stringify(messages));
+    };
 
     const isValidName = (name) => /^[A-Za-z\s]+$/.test(name);
     const isValidEmail = (email) => /^[a-zA-Z0-9._%+-]+@(gmail\.com|test\.com)$/.test(email);
@@ -88,11 +90,10 @@ const Chatbot = () => {
 
     const toggleChatbot = async () => {
         if (isMinimized) {
-            setIsMinimized(false); //Restore chatbot from minimized state
+            setIsMinimized(false); // Restore chatbot from minimized state
             setIsOpen(true);
             return;
         }
-
 
         if (!isOpen) {
             let storedUserId = localStorage.getItem("userId");
@@ -102,10 +103,6 @@ const Chatbot = () => {
                 setUserId(storedUserId);
                 localStorage.setItem("userId", storedUserId);
             }
-            // const newId = generateId();
-            // console.log(newId);
-            // setuserId(newId);
-            // localStorage.setItem("userId", newId);
 
             setOptions([]);
             setConversation([]);
@@ -126,15 +123,13 @@ const Chatbot = () => {
                 const initialMessage = Array.isArray(response.data.message)
                     ? response.data.message.join(' ')
                     : response.data.message;
-                setConversation(prev => [
-                    ...prev,
-                    { text: initialMessage, isBot: true }
-                ]);
 
                 const initialOptions = ["Our Services", "Book A Demo"];
                 setOptions(initialOptions);
+
                 setConversation(prev => [
                     ...prev,
+                    { text: initialMessage, isBot: true },
                     { text: "Choose an option:", isBot: true, options: initialOptions }
                 ]);
             } catch (error) {
@@ -144,8 +139,9 @@ const Chatbot = () => {
                     { text: 'Error starting the chatbot. Please try again later.', isBot: true }
                 ]);
             }
+
             setIsOpen(true); // Open the chatbot
-            setIsMinimized(false) //Restore if minimized
+            setIsMinimized(false); // Restore if minimized
         } else {
             setIsOpen(false);
             console.log("Chatbot is already open.");
@@ -153,36 +149,21 @@ const Chatbot = () => {
     };
 
     const minimizeChatbot = () => {
-        setIsMinimized(true);//Just hide the chatbot
-        setIsOpen(false) //Keep the session active 
+        setIsMinimized(true); // Just hide the chatbot
+        setIsOpen(false); // Keep the session active
     };
-
-    // const handleClose = async () => {
-    //     try {
-    //         const response = await terminateChat(userId);
-    //         console.log("Terminate Chat Response:", response);
-    //         setDisabledOptions(new Set());
-
-    //         addToConversation(response.data.message, true, ['Y', 'N']);
-
-    //         setConversation([]);
-    //         setUserId("");
-    //         localStorage.removeItem("userId"); // Clear stored user ID
-    //         localStorage.removeItem("chatbotConversation"); // Clear chat history
-
-    //         setIsOpen(false);
-    //         setIsMinimized(false);
-
-    //     } catch (error) {
-    //         console.log('Error during termination', error);
-    //         addToConversation('Error terminating the conversation. Please try again later.');
-    //     }
-    // };
 
     const handleClose = async () => {
         try {
             const response = await terminateChat(userId);
             console.log("Terminate Chat Response:", response);
+            setUserId("");
+            localStorage.removeItem("userId"); // Clear stored user ID
+            localStorage.removeItem("chatbotConversation"); // Clear chat history
+
+            setIsOpen(false);
+            setIsMinimized(false);
+            console.log("✅ Chat session cleared.");
 
             if (response?.data?.message) {
                 const terminationMessage = response.data.message;
@@ -207,79 +188,11 @@ const Chatbot = () => {
         }
     };
 
-    // const handleOptionClick = async (option) => {
-    //     try {
-    //         console.log("Selected Option:", option);
-
-    //         if (option === "Y" || option === "N") {
-    //             await handleTerminateResponse(option);
-    //             return;
-    //         }
-
-    //         setIsTyping(true);
-    //         const response = await sendMessage(userId, option.trim());
-    //         setIsTyping(false);
-    //         console.log("🔥 API Response:", response);
-
-    //         if (response?.error) {
-    //             console.error("❌ Server Error:", response.error);
-    //             setConversation((prev) => [
-    //                 ...prev,
-    //                 { text: "Invalid choice. Please select a valid option.", isBot: true, options: [] },
-    //             ]);
-    //             return;
-    //         }
-
-    //         // ✅ Remove previous options properly before setting new ones
-    //         setOptions([]);
-
-    //         // ✅ Handle "Our Services" selection
-    //         if (option === "Our Services" && response.options?.length > 0) {
-    //             console.log("📌 Received Service Options:", response.options);
-
-    //             setConversation((prev) => [
-    //                 ...prev.filter(msg => msg?.options && msg.options.length === 0), // ✅ Prevent undefined errors
-    //                 { text: "Here are our services:", isBot: true },
-    //                 { text: "Please select a service:", isBot: true, options: response.options },
-    //             ]);
-
-    //             setOptions(response.options);
-    //             return;
-    //         }
-
-    //         // ✅ Handle "Book A Demo" selection
-    //         if (option === "Book A Demo") {
-    //             setConversation((prev) => [
-    //                 ...prev.filter(msg => msg?.options && msg.options.length === 0), // ✅ Prevent undefined errors
-    //                 { text: "Kindly provide your details to help us provide you the best service:", isBot: true },
-    //                 { text: "Please provide your name.", isBot: true },
-    //             ]);
-    //             setCurrentStep(1);
-    //             return;
-    //         }
-
-    //         // ✅ Default case: Show backend message and options if available
-    //         setConversation((prev) => [
-    //             ...prev.filter(msg => msg?.options && msg.options.length === 0), // ✅ Prevent undefined errors
-    //             { text: response.message, isBot: true, options: response.options || [] },
-    //         ]);
-
-    //         if (response.options?.length > 0) {
-    //             setOptions(response.options);
-    //         }
-
-    //     } catch (error) {
-    //         console.error("❌ Error handling option:", error);
-    //     }
-    // };
-
-
-
     const handleOptionClick = async (option) => {
         try {
             console.log("Selected Option:", option);
 
-            if (option === "Y" || option === "N") {
+            if (option === "Yes" || option === "No") {
                 await handleTerminateResponse(option);
                 return;
             }
@@ -293,7 +206,7 @@ const Chatbot = () => {
                 console.error("❌ Server Error:", response.error);
                 setConversation((prev) => [
                     ...prev,
-                    { text: "Invalid choice. Please select a valid option.", isBot: true, options: [] },
+                    { text: "Invalid choice. Please select a valid option.", isBot: true, options: [] }
                 ]);
                 return;
             }
@@ -308,7 +221,7 @@ const Chatbot = () => {
                 setConversation((prev) => [
                     ...prev,
                     { text: "Here are our services:", isBot: true },
-                    { text: "Please select a service:", isBot: true, options: response.options }, // Clickable options
+                    { text: "Please select a service:", isBot: true, options: response.options } // Clickable options
                 ]);
                 return;
             }
@@ -318,35 +231,36 @@ const Chatbot = () => {
                 setConversation((prev) => [
                     ...prev,
                     { text: "Kindly provide your details to help us provide you the best service:", isBot: true },
-                    { text: "Please provide your name.", isBot: true }, // ✅ First input request
+                    { text: "Please provide your name.", isBot: true } // ✅ First input request
                 ]);
+
                 setCurrentStep(1); // Move to details submission step
                 return;
             }
 
             // ✅ Handle timeline prompt
-            if (response.message === "When do you wish to start?") {
+            if (response.message.includes("When do you wish to start")) {
                 setConversation((prev) => [
                     ...prev,
-                    { text: response.message, isBot: true, options: response.options || [] },
+                    { text: response.message, isBot: true, options: response.options || [] }
                 ]);
                 setOptions(response.options);
                 return;
             }
 
             // ✅ Handle user details prompt
-            if (response.message === "Kindly provide your details to help us provide you the best service:") {
+            if (response.message.includes("provide your details")) {
                 setConversation((prev) => [
                     ...prev,
                     { text: response.message, isBot: true },
-                    { text: "Please provide your name.", isBot: true }, // ✅ Start user details input immediately
+                    { text: "Please provide your name.", isBot: true } // ✅ Start user details input immediately
                 ]);
                 setCurrentStep(1);
                 return;
             }
 
-            //Handle Callback preference prompt
-            if (response.message === "Request a Call Back") {
+            // Handle Callback preference prompt
+            if (response.message.includes("Request a Call Back")) {
                 setConversation((prev) => [
                     ...prev,
                     { text: response.message, isBot: true },
@@ -354,10 +268,11 @@ const Chatbot = () => {
                 ]);
                 return;
             }
+
             // ✅ Default case: Show backend message and options if available
             setConversation((prev) => [
                 ...prev,
-                { text: response.message, isBot: true, options: response.options || [] },
+                { text: response.message, isBot: true, options: response.options || [] }
             ]);
 
         } catch (error) {
@@ -365,50 +280,7 @@ const Chatbot = () => {
         }
     };
 
-
-
-    // const handleTerminateResponse = async (responseOption) => {
-    //     try {
-    //         if (!userId) {
-    //             throw new Error("No active session to terminate.");
-    //         }
-
-    //         console.log("User termination response:", responseOption);
-
-    //         // Call the backend to process the termination response
-    //         const apiResponse = await terminateResponse(userId, responseOption);
-
-    //         if (!apiResponse || !apiResponse.data) {
-    //             throw new Error("No response from server.");
-    //         }
-
-    //         console.log("✅ Terminate Response API:", apiResponse.data);
-
-    //         setConversation((prev) => [
-    //             ...prev,
-    //             { text: responseOption, isBot: false, isUser: true }, // User's response
-    //             { text: apiResponse.data.message || "Unexpected response from server.", isBot: true }, // Backend response
-    //         ]);
-
-    //         // ✅ Auto-disable chatbot if termination message is received
-    //         if (apiResponse.data.message.includes("Thank you for using our service")) {
-    //             setTimeout(() => {
-    //                 setIsOpen(false); // Close chatbot UI
-    //                 setDisabledOptions(new Set()); // Disable options
-    //                 setConversation([]); // Clear chat history
-    //                 console.log("✅ Chatbot has been disabled.");
-    //             }, 3000); // Delay for smooth transition
-    //         }
-
-    //     } catch (error) {
-    //         console.error("❌ Error sending terminate response:", error.message);
-    //         setConversation((prev) => [
-    //             ...prev,
-    //             { text: error.message || "An unexpected error occurred. Please try again later.", isBot: true },
-    //         ]);
-    //     }
-    // };
-
+    // handleTerminateResponse function
     const handleTerminateResponse = async (responseOption) => {
         try {
             if (!userId) {
@@ -430,14 +302,14 @@ const Chatbot = () => {
             setConversation((prev) => [
                 ...prev,
                 { text: responseOption, isBot: false, isUser: true }, // User's response ("Y" or "N")
-                { text: apiResponse.data.message || "Unexpected response from server.", isBot: true }, // Backend response
+                { text: apiResponse.data.message || "Unexpected response from server.", isBot: true } // Backend response
             ]);
 
             // ✅ Remove previous options & prevent old buttons from appearing
             setDisabledOptions(new Set());
 
             // ✅ If termination is confirmed, close chatbot after 3s
-            if (apiResponse.data.message.includes("Thank you for using our service")) {
+            if (apiResponse.data.message.includes("Thank you for using our service") || responseOption === 'No') {
                 setTimeout(() => {
                     setIsOpen(false);
                     setConversation([]);
@@ -449,12 +321,12 @@ const Chatbot = () => {
             console.error("❌ Error sending terminate response:", error.message);
             setConversation((prev) => [
                 ...prev,
-                { text: "An unexpected error occurred. Please try again later.", isBot: true },
+                { text: "An unexpected error occurred. Please try again later.", isBot: true }
             ]);
         }
     };
 
-
+    // handleSubmitDetails function
     const handleSubmitDetails = async (detail) => {
         let updatedDetails = { ...userDetails };
 
@@ -465,7 +337,7 @@ const Chatbot = () => {
             if (!isValid) {
                 setConversation((prev) => [
                     ...prev,
-                    { text: 'Invalid name. Please enter alphabetic characters only.', isBot: true },
+                    { text: 'Invalid name. Please enter alphabetic characters only.', isBot: true }
                 ]);
                 return;
             }
@@ -473,16 +345,16 @@ const Chatbot = () => {
             setConversation((prev) => [
                 ...prev,
                 { text: detail, isBot: false, isUser: true },
-                { text: 'Please provide your email address.', isBot: true },
+                { text: 'Please provide your email address.', isBot: true }
             ]);
             setCurrentStep(2);
         } else if (currentStep === 2) {
-            //Validate Email
+            // Validate Email
             isValid = isValidEmail(detail);
             if (!isValid) {
                 setConversation((prev) => [
                     ...prev,
-                    { text: 'Invalid email. Please enter a valid email with @gmail.com or @test.com.', isBot: true },
+                    { text: 'Invalid email. Please enter a valid email with @gmail.com or @test.com.', isBot: true }
                 ]);
                 return;
             }
@@ -490,7 +362,7 @@ const Chatbot = () => {
             setConversation((prev) => [
                 ...prev,
                 { text: detail, isBot: false, isUser: true },
-                { text: 'Please provide your phone number (without country code).', isBot: true },
+                { text: 'Please provide your phone number (without country code).', isBot: true }
             ]);
             setCurrentStep(3);
 
@@ -500,30 +372,29 @@ const Chatbot = () => {
             if (!isValid) {
                 setConversation((prev) => [
                     ...prev,
-                    { text: 'Invalid phone number. Please enter a 10-digit number starting with 6-9.', isBot: true },
+                    { text: 'Invalid phone number. Please enter a 10-digit number starting with 6-9.', isBot: true }
                 ]);
                 return;
             }
             updatedDetails.number = detail;
             setConversation((prev) => [
                 ...prev,
-                { text: detail, isBot: false, isUser: true },
+                { text: detail, isBot: false, isUser: true }
             ]);
             try {
                 // Submit user details to the server
                 const response = await submitUserDetails(userId, `${updatedDetails.name},${updatedDetails.number},${updatedDetails.email}`);
-                //Replay the stored query after collecting details
+                // Replay the stored query after collecting details
                 if (response.error) {
                     console.error("❌ Error submitting details:", response.error);
-                    setConversation((prev) => [...prev, { text: response.error.message || 'An error ocuureed.', isBot: true }]);
+                    setConversation((prev) => [...prev, { text: response.error.message || 'An error occurred.', isBot: true }]);
                     return;
                 }
                 setConversation((prev) => [
                     ...prev,
-                    { text: currentQuery, isBot: false, isUser: true },//Replay user's query
+                    { text: currentQuery, isBot: false, isUser: true }, // Replay user's query
                     { text: "Thank you for providing your details. Your query has been registered.", isBot: true },
                     { text: "Request a Call Back?", isBot: true, options: ["Yes", "No"] }
-
                 ]);
                 setOptions([]);
                 setCurrentStep(4); // Move to callback preference step
@@ -531,100 +402,14 @@ const Chatbot = () => {
                 console.error('Error sending user details:', error);
                 setConversation((prev) => [
                     ...prev,
-                    { text: error.message || 'An unexpected error occurred. Please try again later.', isBot: true },
+                    { text: error.message || 'An unexpected error occurred. Please try again later.', isBot: true }
                 ]);
             }
         }
         setUserDetails(updatedDetails);
     };
 
-
-    // const handleSubmitCallbackPreference = async (preference) => {
-    //     try {
-    //         await submitCallbackPreference(userId, preference);
-    //         setConversation((prev) => [
-    //             ...prev,
-    //             { text: 'Callback preference submitted successfully.', isBot: true, options: [] },
-    //             { text: "Please give us a Ratings(*).", isBot: true },
-    //         ]);
-    //         setCurrentStep(5);
-    //     } catch (error) {
-    //         console.error('Error submitting callback preference:', error);
-    //         setConversation((prev) => [
-    //             ...prev,
-    //             { text: 'Error submitting callback preference. Please try again later.', isBot: true, options: [] },
-    //         ]);
-    //     }
-    // };
-
-    // const handleSubmitCallbackPreference = async (preference) => {
-    //     try {
-    //         const response = await submitCallbackPreference(userId, preference);
-
-    //         if (response?.data?.message) {
-    //             setConversation(prev => [...prev, { text: response.data.message, isBot: true }]);
-    //             setOptions([]);
-    //             setCurrentStep(5);
-    //         } else {
-    //             setConversation(prev => [...prev, { text: "Error submitting callback preference. Please try again.", isBot: true }]);
-    //         }
-    //     } catch (error) {
-    //         console.error("Error submitting callback preference:", error);
-    //         setConversation(prev => [...prev, { text: "Error submitting callback preference. Please try again.", isBot: true }]);
-    //     }
-    // };
-
-    // const handleSubmitCallbackPreference = async (preference) => {
-    //     try {
-
-    //         // Send user preference (Yes/No) to the backend
-    //         const response = await submitCallbackPreference(userId, preference);
-
-    //         if (response?.data?.message) {
-    //             // Update chat with user response
-    //             setConversation(prev => [
-    //                 ...prev,
-    //                 { text: preference, isBot: false }, // User message
-    //                 { text: response.data.message, isBot: true } // Bot response from API
-    //             ]);
-
-    //             // Remove the Yes/No options after selection
-    //             setOptions([]);
-    //             setCurrentStep(5);
-
-    //         } else {
-    //             // Handle case where no valid response is received from API
-    //             setConversation(prev => [
-    //                 ...prev,
-    //                 { text: "⚠️ Error submitting callback preference. Please try again.", isBot: true }
-    //             ]);
-    //         }
-    //     } catch (error) {
-    //         console.error("❌ Error submitting callback preference:", error);
-
-    //         setConversation(prev => [
-    //             ...prev,
-    //             { text: "⚠️ Network error. Please try again later.", isBot: true }
-    //         ]);
-    //     }
-    // };
-
-    // const handleSubmitCallbackPreference = async (preference) => {
-    //     try {
-    //         setOptions([]); // ✅ Clear buttons immediately
-    //         const response = await submitCallbackPreference(userId, preference);
-
-    //         if (response?.data?.message) {
-    //             setConversation(prev => [...prev, { text: response.data.message, isBot: true }]);
-    //         } else {
-    //             setConversation(prev => [...prev, { text: "Error submitting callback preference. Please try again.", isBot: true }]);
-    //         }
-    //     } catch (error) {
-    //         console.error("Error submitting callback preference:", error);
-    //         setConversation(prev => [...prev, { text: "Error submitting callback preference. Please try again.", isBot: true }]);
-    //     }
-    // };
-
+    // handleSubmitCallbackPreference function
     const handleSubmitCallbackPreference = async (preference) => {
         console.log("Submitting preference:", preference); // ✅ Debug API request
 
@@ -652,11 +437,14 @@ const Chatbot = () => {
             }
         } catch (error) {
             console.error("Error submitting callback preference:", error);
-            setConversation(prev => [...prev, { text: "Error submitting callback preference. Please try again.", isBot: true }]);
+            setConversation((prev) => [
+                ...prev,
+                { text: "Error submitting callback preference. Please try again later.", isBot: true }
+            ]);
         }
     };
 
-
+    // handleReviewSubmit function
     const handleReviewSubmit = async (detail, isSatisfaction = false) => {
         let updatedReviewDetails = { ...userSatisfaction };
 
@@ -670,7 +458,7 @@ const Chatbot = () => {
 
             setConversation((prev) => [
                 ...prev,
-                { text: `Ratings: ${visualStars} (${detail}/5)`, isBot: false, isUser: true },
+                { text: `Ratings: ${visualStars} (${detail}/5)`, isBot: false, isUser: true }
             ]);
 
             setOptions([]); // Disable options after submission
@@ -683,7 +471,7 @@ const Chatbot = () => {
                 if (response?.data?.message) {
                     setConversation((prev) => [
                         ...prev,
-                        { text: response.data.message, isBot: true }, // ✅ Backend message displayed
+                        { text: response.data.message, isBot: true } // ✅ Backend message displayed
                     ]);
                 }
             } catch (error) {
@@ -698,48 +486,6 @@ const Chatbot = () => {
         }
     };
 
-
-
-    // const handleQuerySubmit = async () => {
-    //     if (!currentQuery.trim() || isQueryDisabled) return;
-
-    //     if (!userDetails.name || !userDetails.email || !userDetails.number) {
-    //         setConversation((prev) => [
-    //             ...prev,
-    //             { text: "Kindly provide your details to help us provide you the best service:", isBot: true },
-    //             { text: "Please provide your name.", isBot: true },
-    //         ]);
-    //         setCurrentStep(1);
-    //         return;
-    //     }
-
-    //     try {
-    //         setIsQueryDisabled(true);
-
-    //         if (currentQuery.trim()) {
-    //             setConversation((prev) => [
-    //                 ...prev,
-    //                 { text: currentQuery, isBot: false, isUser: true },
-    //             ]);
-    //         }
-
-    //         setConversation((prev) => [
-    //             ...prev,
-    //             { text: "Thank you for providing your details. Your query has been registered.", isBot: true },
-    //         ]);
-
-    //         setCurrentQuery("");
-    //         const response = await submitQuery(userId, currentQuery);
-    //         console.log(response);
-    //     } catch (error) {
-    //         console.error("Error submitting query:", error);
-    //         setConversation((prev) => [
-    //             ...prev,
-    //             { text: "There was an error submitting your query. Please try again later.", isBot: true },
-    //         ]);
-    //     }
-    // };
-
     const handleQuerySubmit = async () => {
         // Return early if there is no query text or if the query is disabled
         if (!currentQuery.trim() || isQueryDisabled) return;
@@ -749,7 +495,7 @@ const Chatbot = () => {
             setConversation((prev) => [
                 ...prev,
                 { text: "Kindly provide your details to help us provide you the best service:", isBot: true },
-                { text: "Please provide your name.", isBot: true },
+                { text: "Please provide your name.", isBot: true }
             ]);
             setCurrentStep(1);
             return;
@@ -764,13 +510,13 @@ const Chatbot = () => {
             // Add the user's query to the conversation display
             setConversation((prev) => [
                 ...prev,
-                { text: query, isBot: false, isUser: true },
+                { text: query, isBot: false, isUser: true }
             ]);
 
             // Notify the user that the query has been registered
             setConversation((prev) => [
                 ...prev,
-                { text: "Thank you for providing your details. Your query has been registered.", isBot: true },
+                { text: "Thank you for providing your details. Your query has been registered.", isBot: true }
             ]);
 
             // Clear the input field
@@ -779,11 +525,12 @@ const Chatbot = () => {
             // Submit the query to your backend API
             const response = await submitQuery(userId, query);
             console.log("Response from submitQuery:", response);
+
         } catch (error) {
             console.error("Error submitting query:", error);
             setConversation((prev) => [
                 ...prev,
-                { text: "There was an error submitting your query. Please try again later.", isBot: true },
+                { text: "There was an error submitting your query. Please try again later.", isBot: true }
             ]);
         } finally {
             // Re-enable query submission regardless of success or error
@@ -791,95 +538,14 @@ const Chatbot = () => {
         }
     };
 
-
-
-    // const handleOptionClick = async (option) => {
-    //     try {
-    //         console.log("Selected Option:", option);
-    //         setDisabledOptions(new Set([...disabledOptions, option])); // Disable the clicked option
-
-    //         const response = await sendMessage(userId, option);
-    //         console.log("🔥 API Response:", JSON.stringify(response, null, 2));
-
-    //         if (response?.error) {
-    //             console.error("❌ Server Error:", response.error);
-    //             setConversation((prev) => [
-    //                 ...prev,
-    //                 { text: "Invalid choice. Please select a valid option.", isBot: true, options: [] },
-    //             ]);
-    //             return;
-    //         }
-
-    //         // ✅ Handle "Our Services"
-    //         if (option === "Our Services" && response.options?.length > 0) {
-    //             setOptions(response.options); // Update available options
-    //             setConversation((prev) => [
-    //                 ...prev,
-    //                 { text: "Here are our services:", isBot: true },
-    //                 ...response.options.map((service) => ({ text: service, isBot: true })),
-    //             ]);
-    //             return;
-    //         }
-
-    //         // ✅ Handle "Book A Demo" to directly request details
-    //         if (option === "Book a Demo") {
-    //             setConversation((prev) => [
-    //                 ...prev,
-    //                 { text: response.message || "Please provide your details.", isBot: true },
-    //             ]);
-    //             setCurrentStep(1); // Activate input field for details
-    //             return;
-    //         }
-
-    //         // ✅ Default case for other responses
-    //         setConversation((prev) => [
-    //             ...prev,
-    //             { text: response.message, isBot: true },
-    //         ]);
-
-    //     } catch (error) {
-    //         console.error("❌ Error sending message:", error);
-    //         setConversation((prev) => [
-    //             ...prev,
-    //             { text: "An error occurred. Please try again later.", isBot: true, options: [] },
-    //         ]);
-    //     }
-    // };
-
-
-
-    // const handleMicInput = async (formData) => {
-    //     console.log("🔥 userId inside handleMicInput:", userId); // Debugging
-
-    //     if (!userId) {
-    //         console.error("❌ No user ID found! Audio query cannot be processed.");
-    //         return;
-    //     }
-    //     try {
-    //         const response = await submitQuery(userId, "", formData.get("file"));
-    //         console.log("🎤 Received Transcribed Text:", response);
-
-    //         if (response && response.text) {  // Ensure response contains valid text
-    //             setCurrentQuery(response.text); // Auto-fill transcribed text in input field
-    //             handleQuerySubmit(); // Auto-submit query
-    //         } else {
-    //             console.error("❌ No transcribed text received.");
-    //         }
-    //     } catch (error) {
-    //         console.error("❌ Error processing audio:", error);
-    //     }
-    // };
-
+    // handleMicInput function
     const handleMicInput = async (formData) => {
-        // console.log("🔥 userId inside handleMicInput:", userId); // Debugging
-
         if (!userId) {
             console.error("❌ No user ID found! Audio query cannot be processed.");
             return;
         }
 
         try {
-            // ✅ Ensure the correct key is used for the audio file
             const audioFile = formData.get("file");
             if (!audioFile) {
                 console.error("❌ No audio file found in FormData.");
@@ -888,14 +554,14 @@ const Chatbot = () => {
 
             console.log("🎤 Sending audio file for transcription...");
 
-            // ✅ Use `convertAudio` instead of `submitQuery`
+            // Use `convertAudio` instead of `submitQuery`
             const response = await convertAudio(userId, audioFile);
 
             console.log("✅ Received Transcribed Text:", response);
 
             if (response && response.text) {
-                setCurrentQuery(response.text); // ✅ Auto-fill transcribed text in input field
-                handleQuerySubmit(); // ✅ Auto-submit query
+                setCurrentQuery(response.text); // Auto-fill transcribed text in input field
+                handleQuerySubmit(); // Auto-submit query
             } else {
                 console.error("❌ No transcribed text received.");
             }
@@ -903,7 +569,6 @@ const Chatbot = () => {
             console.error("❌ Error processing audio:", error.response?.data || error.message);
         }
     };
-
 
     return (
         <div className="chatbot-container">
@@ -918,7 +583,7 @@ const Chatbot = () => {
                     <ChatbotHeader handleClose={handleClose} handleMinimize={minimizeChatbot} />
                     <ChatbotConversation
                         conversation={conversation}
-                        option={options}
+                        options={options}
                         conversationEndRef={conversationEndRef}
                         isTyping={isTyping}
                         handleOptionClick={handleOptionClick}
@@ -945,9 +610,7 @@ const Chatbot = () => {
                             handleQuerySubmit={handleQuerySubmit}
                             handleMicInput={handleMicInput}
                             isQueryDisabled={isQueryDisabled}
-                            userId={userId}  // ✅ Ensure userID is being passed
-
-
+                            userId={userId} // Ensure userID is being passed
                         />
                     )}
                 </div>

@@ -15,6 +15,7 @@ const axiosConfig = {
 // Function to initialize the conversation recording
 export const initRecordingConversation = async (userId) => {
     try {
+
         const response = await axios.post(`${apiBaseURL}/chatbot/init_recording_conversation`, { user_id: userId }, axiosConfig);
         console.log("✅ Recording initialized:", response);
         return response;
