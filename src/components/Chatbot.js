@@ -21,21 +21,25 @@ import QuerySubmission from './QuerySubmission';
 // import MinimizeChatbot from "./MinimizeChatbot";
 import "./Chatbot.css";
 
+// Define the generateId function at the top
+const generateId = () => {
+    const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    let uniqueID = "#";
+    for (let i = 0; i < 6; i++) {
+        const randomIndex = Math.floor(Math.random() * characters.length);
+        uniqueID += characters[randomIndex];
+    }
+    return uniqueID;
+};
+
 const Chatbot = () => {
     const [isOpen, setIsOpen] = useState(false);
-    const [isMinimized, setIsMinimized] = useState(() => {
-        return localStorage.getItem("chatbotMinimized") === "true";
-    });
-    const [userId, setUserId] = useState(() => {
-        const storedId = localStorage.getItem("userId");
-        return storedId || "";
-    });
+    // const [isMinimized, setIsMinimized] = useState(() => {
+    //     return localStorage.getItem("chatbotMinimized") === "true";
+    // });
+    const [userId, setUserId] = useState(() => generateId());
     const [options, setOptions] = useState([]);
-    const [conversation, setConversation] = useState(() => {
-        const storedConversation = localStorage.getItem("chatbotConversation");
-        return storedConversation ? JSON.parse(storedConversation) : [];
-    });
-
+    const [conversation, setConversation] = useState([]);
     const [disabledOptions, setDisabledOptions] = useState(new Set());
     const [userDetails, setUserDetails] = useState({ name: '', number: '', email: '' });
     const [userSatisfaction, setUserSatisfaction] = useState({ review: '', satisfactionLevel: 0 });
@@ -48,61 +52,47 @@ const Chatbot = () => {
 
     const conversationEndRef = useRef(null);
 
-    useEffect(() => {
-        localStorage.setItem("chatbotMinimized", isMinimized);
-    }, [isMinimized]);
+    // useEffect(() => {
+    //     const storedMinimized = localStorage.getItem("chatbotMinimized");
+    //     if (storedMinimized) {
+    //         setIsMinimized(storedMinimized === "true");
+    //     }
+    // }, []);
 
-    useEffect(() => {
-        localStorage.setItem("chatbotConversation", JSON.stringify(conversation));
-    }, [conversation]);
-
-    useEffect(() => {
-        if (userId) {
-            localStorage.setItem("userId", userId);
-        }
-    }, [userId]);
+    // useEffect(() => {
+    //     localStorage.setItem("chatbotMinimized", isMinimized);
+    // }, [isMinimized]);
 
     useEffect(() => {
         conversationEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [conversation]);
 
-    const saveChatHistory = (messages) => {
-        localStorage.setItem("chatHistory", JSON.stringify(messages));
-    };
+    useEffect(() => {
+        console.log("isOpen state changed:", isOpen);
+    }, [isOpen]);
+
+    // const saveChatHistory = (messages) => {
+    //     localStorage.setItem("chatHistory", JSON.stringify(messages));
+    // };
 
     const isValidName = (name) => /^[A-Za-z\s]+$/.test(name);
     const isValidEmail = (email) => /^[a-zA-Z0-9._%+-]+@(gmail\.com|test\.com)$/.test(email);
     const isValidNumber = (number) => /^[6-9]\d{9}$/.test(number);
-
-    const generateId = () => {
-        const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-        let uniqueID = "#";
-        for (let i = 0; i < 6; i++) {
-            const randomIndex = Math.floor(Math.random() * characters.length);
-            uniqueID += characters[randomIndex];
-        }
-        return uniqueID;
-    };
 
     const addToConversation = (message, isBot = true, options = []) => {
         setConversation((prev) => [...prev, { text: message, isBot, options }]);
     };
 
     const toggleChatbot = async () => {
-        if (isMinimized) {
-            setIsMinimized(false); // Restore chatbot from minimized state
-            setIsOpen(true);
-            return;
-        }
+        // if (isMinimized) {
+        //     setIsMinimized(false);
+        //     setIsOpen(true);
+        //     return;
+        // }
 
         if (!isOpen) {
-            let storedUserId = localStorage.getItem("userId");
-
-            if (!storedUserId) {
-                storedUserId = generateId();
-                setUserId(storedUserId);
-                localStorage.setItem("userId", storedUserId);
-            }
+            console.log("Chatbot button clicked");
+            setIsOpen(true);
 
             setOptions([]);
             setConversation([]);
@@ -114,10 +104,10 @@ const Chatbot = () => {
             setIsQueryDisabled(false);
 
             try {
-                await initRecordingConversation(storedUserId);
-                console.log("Conversation recording initialized");
+                await initRecordingConversation(userId);
+                console.log("Conversation recording initialized", userId);
 
-                const response = await startChat(storedUserId);
+                const response = await startChat(userId);
                 console.log("Start Chat Response:", response);
 
                 const initialMessage = Array.isArray(response.data.message)
@@ -132,6 +122,7 @@ const Chatbot = () => {
                     { text: initialMessage, isBot: true },
                     { text: "Choose an option:", isBot: true, options: initialOptions }
                 ]);
+                setOptions(initialOptions);
             } catch (error) {
                 console.error("Error starting chatbot:", error);
                 setConversation(prev => [
@@ -140,69 +131,88 @@ const Chatbot = () => {
                 ]);
             }
 
-            setIsOpen(true); // Open the chatbot
-            setIsMinimized(false); // Restore if minimized
+            setIsOpen(true);
+            // setIsMinimized(false);
         } else {
             setIsOpen(false);
             console.log("Chatbot is already open.");
         }
     };
 
-    const minimizeChatbot = () => {
-        setIsMinimized(true); // Just hide the chatbot
-        setIsOpen(false); // Keep the session active
-    };
+    // const minimizeChatbot = () => {
+    //     setIsMinimized(true);
+    //     setIsOpen(false);
+    // };
 
     const handleClose = async () => {
         try {
+            console.log("🚪 User requested to close the chat...");
+
             const response = await terminateChat(userId);
             console.log("Terminate Chat Response:", response);
-            setUserId("");
-            localStorage.removeItem("userId"); // Clear stored user ID
-            localStorage.removeItem("chatbotConversation"); // Clear chat history
-
-            setIsOpen(false);
-            setIsMinimized(false);
-            console.log("✅ Chat session cleared.");
 
             if (response?.data?.message) {
-                const terminationMessage = response.data.message;
-
-                // ✅ Check if message contains (Y/N) and extract options dynamically
-                let options = [];
-                if (terminationMessage.includes("(Y/N)")) {
-                    options = ["Yes", "No"];
-                }
-
-                // ✅ Add the message & dynamically set options
-                addToConversation(terminationMessage, true, options);
-            } else {
-                addToConversation("Error processing termination request. Please try again.", true);
+                // 🟢 Show "Why are you leaving so soon?" message and wait for user input
+                addToConversation(response.data.message, true, ["Yes", "No"]);
+                return; // 🚨 Prevents automatic chat termination
             }
 
-            // setCurrentStep(6); // ✅ Move to termination response step
-
+            // 🟢 If no message from API, force termination
+            addToConversation("Error processing termination request. Please try again.", true);
+            setTimeout(() => {
+                setIsOpen(false);
+                setConversation([]);
+                setUserId(generateId());
+                console.log("✅ Chatbot session forcefully terminated.");
+            }, 3000);
         } catch (error) {
-            console.log("Error during termination:", error);
+            console.error("❌ Error during termination:", error);
             addToConversation("Error terminating the conversation. Please try again later.", true);
         }
     };
 
+    // const restartChat = async () => {
+    //     console.log("🔄 Restarting Chatbot...");
+
+    //     // Reset chatbot state completely
+    //     setConversation([]);
+    //     setOptions([]);
+    //     setDisabledOptions(new Set());
+    //     setUserDetails({ name: '', number: '', email: '' });
+    //     setUserSatisfaction({ review: '', satisfactionLevel: 0 });
+    //     setCurrentStep(0);
+    //     setCurrentSliderValue(5);
+    //     setIsQueryDisabled(false);
+    //     setIsRatingDisabled(false);
+    //     setCurrentQuery('');
+    //     setUserId(generateId()); // Generate a new user session
+
+
+    // };
+
+
+
     const handleOptionClick = async (option) => {
         try {
             console.log("Selected Option:", option);
-
-            if (option === "Yes" || option === "No") {
-                await handleTerminateResponse(option);
+            if (option === 'Yes') {
+                // restartChat();  // ✅ Now calling restartChat() properly
                 return;
             }
+
+            if (option === 'No') {
+                await handleTerminateResponse('N');
+                setOptions([]);
+                return;
+            }
+
 
             setIsTyping(true);
             const response = await sendMessage(userId, option.trim());
             setIsTyping(false);
             console.log("🔥 API Response:", response);
 
-            if (response?.error) {
+            if (response.error) {
                 console.error("❌ Server Error:", response.error);
                 setConversation((prev) => [
                     ...prev,
@@ -211,114 +221,68 @@ const Chatbot = () => {
                 return;
             }
 
-            // ✅ Clear previous options properly before setting new ones
             setOptions([]);
-            await new Promise(resolve => setTimeout(resolve, 50)); // Ensure state update
+            // await new Promise(resolve => setTimeout(resolve, 50));
 
-            // ✅ Handle "Our Services" selection properly
             if (option === "Our Services" && response.options?.length > 0) {
-                setOptions(response.options); // Ensure options are set only once
+                setOptions(response.options);
                 setConversation((prev) => [
                     ...prev,
                     { text: "Here are our services:", isBot: true },
-                    { text: "Please select a service:", isBot: true, options: response.options } // Clickable options
+                    { text: "Please select a service:", isBot: true, options: response.options }
                 ]);
                 return;
             }
 
-            // ✅ Handle "Book A Demo" selection
             if (option === "Book A Demo") {
                 setConversation((prev) => [
                     ...prev,
                     { text: "Kindly provide your details to help us provide you the best service:", isBot: true },
-                    { text: "Please provide your name.", isBot: true } // ✅ First input request
+                    { text: "Please provide your name.", isBot: true }
                 ]);
 
-                setCurrentStep(1); // Move to details submission step
-                return;
-            }
-
-            // ✅ Handle timeline prompt
-            if (response.message.includes("When do you wish to start")) {
-                setConversation((prev) => [
-                    ...prev,
-                    { text: response.message, isBot: true, options: response.options || [] }
-                ]);
-                setOptions(response.options);
-                return;
-            }
-
-            // ✅ Handle user details prompt
-            if (response.message.includes("provide your details")) {
-                setConversation((prev) => [
-                    ...prev,
-                    { text: response.message, isBot: true },
-                    { text: "Please provide your name.", isBot: true } // ✅ Start user details input immediately
-                ]);
                 setCurrentStep(1);
                 return;
             }
 
-            // Handle Callback preference prompt
-            if (response.message.includes("Request a Call Back")) {
-                setConversation((prev) => [
-                    ...prev,
-                    { text: response.message, isBot: true },
-                    { text: "", isBot: true, options: ["Yes", "No"] }
-                ]);
-                return;
+            if (response.message) {
+                if (response.message.includes("When do you wish to start")) {
+                    setConversation((prev) => [
+                        ...prev,
+                        { text: response.message, isBot: true, options: response.options || [] }
+                    ]);
+                    setOptions(response.options);
+                    return;
+                }
+
+                if (response.message.includes("provide your details")) {
+                    setConversation((prev) => [
+                        ...prev,
+                        { text: response.message, isBot: true },
+                        { text: "Please provide your name.", isBot: true }
+                    ]);
+                    setCurrentStep(1);
+                    return;
+                }
+
+                if (response.message.includes("Request a Call Back")) {
+                    setConversation((prev) => [
+                        ...prev,
+                        { text: response.message, isBot: true },
+                        { text: "", isBot: true, options: ["Yes", "No"] }
+                    ]);
+                    return;
+                }
             }
 
-            // ✅ Default case: Show backend message and options if available
             setConversation((prev) => [
                 ...prev,
                 { text: response.message, isBot: true, options: response.options || [] }
             ]);
 
         } catch (error) {
+            setIsTyping(false);
             console.error("❌ Error handling option:", error);
-        }
-    };
-
-    // handleTerminateResponse function
-    const handleTerminateResponse = async (responseOption) => {
-        try {
-            if (!userId) {
-                throw new Error("No active session to terminate.");
-            }
-
-            console.log("User selected termination response:", responseOption);
-
-            // ✅ Send "Y" or "N" to the backend
-            const apiResponse = await terminateResponse(userId, responseOption);
-
-            if (!apiResponse || !apiResponse.data) {
-                throw new Error("No response from server.");
-            }
-
-            console.log("✅ Termination Response API:", apiResponse.data);
-
-            // ✅ Update chat with user's choice & bot's response
-            setConversation((prev) => [
-                ...prev,
-                { text: responseOption, isBot: false, isUser: true }, // User's response ("Y" or "N")
-                { text: apiResponse.data.message || "Unexpected response from server.", isBot: true } // Backend response
-            ]);
-
-            // ✅ Remove previous options & prevent old buttons from appearing
-            setDisabledOptions(new Set());
-
-            // ✅ If termination is confirmed, close chatbot after 3s
-            if (apiResponse.data.message.includes("Thank you for using our service") || responseOption === 'No') {
-                setTimeout(() => {
-                    setIsOpen(false);
-                    setConversation([]);
-                    console.log("✅ Chatbot has been disabled.");
-                }, 3000);
-            }
-
-        } catch (error) {
-            console.error("❌ Error sending terminate response:", error.message);
             setConversation((prev) => [
                 ...prev,
                 { text: "An unexpected error occurred. Please try again later.", isBot: true }
@@ -326,7 +290,94 @@ const Chatbot = () => {
         }
     };
 
-    // handleSubmitDetails function
+
+    // const handleTerminateResponse = async (responseOption) => {
+    //     try {
+    //         console.log("User selected termination response:", responseOption);
+
+    //         if (!userId) {
+    //             console.error("❌ No user session found. Cannot send termination response.");
+    //             return;
+    //         }
+
+    //         // Send "Yes" or "No" to the backend
+    //         const apiResponse = await terminateResponse(userId, responseOption);
+
+    //         if (!apiResponse || !apiResponse.data) {
+    //             throw new Error("No response from server.");
+    //         }
+
+    //         console.log("✅ Termination Response API:", apiResponse.data);
+
+    //         setConversation((prev) => [
+    //             ...prev,
+    //             { text: responseOption, isBot: false, isUser: true },
+    //             { text: apiResponse.data.message || "Unexpected response from server.", isBot: true }
+    //         ]);
+
+    //         setDisabledOptions(new Set());
+
+    //         if (apiResponse.data.message.includes("Thank you for using our service") || responseOption === 'No') {
+    //             setTimeout(() => {
+    //                 setIsOpen(false);
+    //                 setConversation([]);
+    //                 setUserId(generateId());
+    //                 console.log("✅ Chatbot session terminated.");
+    //             }, 3000);
+    //         }
+
+    //     } catch (error) {
+    //         console.error("❌ Error sending terminate response:", error.message);
+    //         setConversation((prev) => [
+    //             ...prev,
+    //             { text: "An unexpected error occurred. Please try again later.", isBot: true }
+    //         ]);
+    //     }
+    // };
+
+    const handleTerminateResponse = async (responseOption) => {
+        try {
+            console.log("User selected termination response:", responseOption);
+
+            if (!userId) {
+                console.error("❌ No user session found. Cannot send termination response.");
+                addToConversation("Session expired. Please restart the chat.", true);
+                return;
+            }
+
+            // ✅ Convert "Yes" → "Y", "No" → "N"
+            const formattedResponse = responseOption.toUpperCase() === "YES" ? "Y" : "N";
+            console.log("📡 Sending terminate response:", formattedResponse);
+
+            const apiResponse = await terminateResponse(userId, formattedResponse);
+
+            if (!apiResponse || apiResponse.error) {
+                console.error("❌ Error in terminateResponse API:", apiResponse.error);
+                addToConversation(apiResponse.error || "Error processing termination request. Please try again.", true);
+                return;
+            }
+
+            console.log("✅ Termination response processed:", apiResponse.data);
+
+            addToConversation(responseOption, false);
+            addToConversation(apiResponse.data.message, true);
+
+            // 🟢 Only close the chat if the user selects "No"
+            if (formattedResponse === "N") {
+                setTimeout(() => {
+                    setIsOpen(false);
+                    setConversation([]);
+                    setUserId(generateId());
+                    console.log("✅ Chatbot session terminated.");
+                }, 3000);
+            }
+        } catch (error) {
+            console.error("❌ Error handling terminate response:", error.message);
+            addToConversation("An unexpected error occurred. Please try again later.", true);
+        }
+    };
+
+
     const handleSubmitDetails = async (detail) => {
         let updatedDetails = { ...userDetails };
 
@@ -382,9 +433,7 @@ const Chatbot = () => {
                 { text: detail, isBot: false, isUser: true }
             ]);
             try {
-                // Submit user details to the server
                 const response = await submitUserDetails(userId, `${updatedDetails.name},${updatedDetails.number},${updatedDetails.email}`);
-                // Replay the stored query after collecting details
                 if (response.error) {
                     console.error("❌ Error submitting details:", response.error);
                     setConversation((prev) => [...prev, { text: response.error.message || 'An error occurred.', isBot: true }]);
@@ -392,12 +441,12 @@ const Chatbot = () => {
                 }
                 setConversation((prev) => [
                     ...prev,
-                    { text: currentQuery, isBot: false, isUser: true }, // Replay user's query
+                    { text: currentQuery, isBot: false, isUser: true },
                     { text: "Thank you for providing your details. Your query has been registered.", isBot: true },
                     { text: "Request a Call Back?", isBot: true, options: ["Yes", "No"] }
                 ]);
                 setOptions([]);
-                setCurrentStep(4); // Move to callback preference step
+                setCurrentStep(4);
             } catch (error) {
                 console.error('Error sending user details:', error);
                 setConversation((prev) => [
@@ -408,13 +457,11 @@ const Chatbot = () => {
         }
         setUserDetails(updatedDetails);
     };
-
-    // handleSubmitCallbackPreference function
     const handleSubmitCallbackPreference = async (preference) => {
-        console.log("Submitting preference:", preference); // ✅ Debug API request
+        console.log("Submitting preference:", preference); // Debug API request
 
         try {
-            // ✅ Ensure chatbot processes only "Yes" or "No"
+            // Ensure chatbot processes only "Yes" or "No"
             if (preference !== "Yes" && preference !== "No") {
                 console.error("Invalid preference sent:", preference);
                 return;
@@ -443,8 +490,6 @@ const Chatbot = () => {
             ]);
         }
     };
-
-    // handleReviewSubmit function
     const handleReviewSubmit = async (detail, isSatisfaction = false) => {
         let updatedReviewDetails = { ...userSatisfaction };
 
@@ -471,7 +516,7 @@ const Chatbot = () => {
                 if (response?.data?.message) {
                     setConversation((prev) => [
                         ...prev,
-                        { text: response.data.message, isBot: true } // ✅ Backend message displayed
+                        { text: response.data.message, isBot: true } // Backend message displayed
                     ]);
                 }
             } catch (error) {
@@ -483,14 +528,16 @@ const Chatbot = () => {
             }
 
             setUserSatisfaction(updatedReviewDetails);
+            // ✅ Ask the user if they want to restart after submitting feedback
+            // setTimeout(() => {
+            //     addToConversation("Would you like to restart the chat?", true, ["Yes", "No"]);
+            // }, 2000);
+
         }
     };
-
     const handleQuerySubmit = async () => {
-        // Return early if there is no query text or if the query is disabled
         if (!currentQuery.trim() || isQueryDisabled) return;
 
-        // Check if user details have been provided; if not, prompt for details
         if (!userDetails.name || !userDetails.email || !userDetails.number) {
             setConversation((prev) => [
                 ...prev,
@@ -504,25 +551,20 @@ const Chatbot = () => {
         try {
             setIsQueryDisabled(true);
 
-            // Store the current query text before clearing it
             const query = currentQuery.trim();
 
-            // Add the user's query to the conversation display
             setConversation((prev) => [
                 ...prev,
                 { text: query, isBot: false, isUser: true }
             ]);
 
-            // Notify the user that the query has been registered
             setConversation((prev) => [
                 ...prev,
                 { text: "Thank you for providing your details. Your query has been registered.", isBot: true }
             ]);
 
-            // Clear the input field
             setCurrentQuery("");
 
-            // Submit the query to your backend API
             const response = await submitQuery(userId, query);
             console.log("Response from submitQuery:", response);
 
@@ -533,12 +575,10 @@ const Chatbot = () => {
                 { text: "There was an error submitting your query. Please try again later.", isBot: true }
             ]);
         } finally {
-            // Re-enable query submission regardless of success or error
             setIsQueryDisabled(false);
         }
     };
 
-    // handleMicInput function
     const handleMicInput = async (formData) => {
         if (!userId) {
             console.error("❌ No user ID found! Audio query cannot be processed.");
@@ -561,7 +601,7 @@ const Chatbot = () => {
 
             if (response && response.text) {
                 setCurrentQuery(response.text); // Auto-fill transcribed text in input field
-                handleQuerySubmit(); // Auto-submit query
+                await handleQuerySubmit(); // Auto-submit query
             } else {
                 console.error("❌ No transcribed text received.");
             }
@@ -569,7 +609,6 @@ const Chatbot = () => {
             console.error("❌ Error processing audio:", error.response?.data || error.message);
         }
     };
-
     return (
         <div className="chatbot-container">
             {!isOpen && (
@@ -578,9 +617,9 @@ const Chatbot = () => {
                 </button>
             )}
 
-            {isOpen && !isMinimized && (
+            {isOpen && (
                 <div className="chatbot-frame">
-                    <ChatbotHeader handleClose={handleClose} handleMinimize={minimizeChatbot} />
+                    <ChatbotHeader handleClose={handleClose} />
                     <ChatbotConversation
                         conversation={conversation}
                         options={options}

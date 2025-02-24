@@ -76,22 +76,10 @@
     cursor: pointer;
 }
 
-.chatbot-close-button:hover {
-    color: #f1f1f1;
-}
+.minimize-btn {
+    background-color: none;
+    color: none;
 
-.chatbot-minimize-button {
-    background-color: transparent;
-    border: none;
-    font-size: 22px;
-    justify-content: center;
-    cursor: pointer;
-    margin-right: 5px;
-    margin-bottom: 5px;
-}
-
-.chatbot-minimize-button:hover {
-    color: #f1f1f1;
 }
 
 .chatbot-conversation {

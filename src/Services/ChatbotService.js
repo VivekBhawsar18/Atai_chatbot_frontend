@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 
-// Define the base URL for your API
-const apiBaseURL = 'https://chatbot-api-b1jc.onrender.com'; // Ensure this is the correct URL for your deployed backend
+const apiBaseURL = 'https://chatbot-api-b1jc.onrender.com';
+// const apiBaseURL = 'http://127.0.0.1:5000';
 
 // Axios configuration for default headers
 const axiosConfig = {
@@ -44,7 +44,7 @@ export const sendMessage = async (userId, message) => {
         console.log("Sending message:", { user_id: userId, message });
         const response = await axios.post(`${apiBaseURL}/chatbot/handle_chat`, { user_id: userId, message: message.trim(), }, axiosConfig);
 
-        console.log("✅ Message sent:", response);
+        console.log("✅ Message sent:", response.ddata);
         return response.data;
     } catch (error) {
         console.error("❌ Error sending message:", error.response?.data || error.message);
@@ -67,7 +67,7 @@ export const submitUserDetails = async (userId, details) => {
             }
         });
         console.log("✅ User details submitted:", response.data);
-        return response.data;
+        return response;
     } catch (error) {
         console.error("❌ Error submitting details:", error.response?.data || error.message);
         return { error: error.response?.data || error.message };
@@ -122,10 +122,7 @@ export const submitSatisfaction = async (userId, satisfaction) => {
 
 // Function to terminate the chat
 export const terminateChat = async (userId) => {
-    // if (!userId) {
-    //     console.error("❌ Chatbot ID is missing. Cannot terminate chat.");
-    //     return { error: "Chatbot ID is required." };
-    // }
+
     try {
         const response = await axios.post(`${apiBaseURL}/chatbot/terminate`, { user_id: userId }, axiosConfig);
         return response;
@@ -138,6 +135,9 @@ export const terminateChat = async (userId) => {
 // Function to handle the terminate response
 export const terminateResponse = async (userId, responseOption) => {
     try {
+        if (!userId) throw new Error("❌ User ID is required for termination response.");
+
+
         const response = await axios.post(`${apiBaseURL}/chatbot/terminate_response`, { user_id: userId, response: responseOption }, axiosConfig);
         console.log("✅ Terminate Response API:", response.data);
         return response;
