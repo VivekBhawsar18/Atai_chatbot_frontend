@@ -24,7 +24,7 @@ import "./Chatbot.css";
 // Define the generateId function at the top
 const generateId = () => {
     const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    let uniqueID = "#";
+    let uniqueID = "";
     for (let i = 0; i < 6; i++) {
         const randomIndex = Math.floor(Math.random() * characters.length);
         uniqueID += characters[randomIndex];
@@ -196,7 +196,8 @@ const Chatbot = () => {
         try {
             console.log("Selected Option:", option);
             if (option === 'Yes') {
-                // restartChat();  // ✅ Now calling restartChat() properly
+                await handleTerminateResponse('Y');
+                setOptions([]);
                 return;
             }
 
@@ -222,7 +223,7 @@ const Chatbot = () => {
             }
 
             setOptions([]);
-            // await new Promise(resolve => setTimeout(resolve, 50));
+            await new Promise(resolve => setTimeout(resolve, 50));
 
             if (option === "Our Services" && response.options?.length > 0) {
                 setOptions(response.options);
@@ -457,6 +458,7 @@ const Chatbot = () => {
         }
         setUserDetails(updatedDetails);
     };
+
     const handleSubmitCallbackPreference = async (preference) => {
         console.log("Submitting preference:", preference); // Debug API request
 
@@ -490,6 +492,51 @@ const Chatbot = () => {
             ]);
         }
     };
+
+    // const handleSubmitCallbackPreference = async (preference) => {
+    //     console.log("Submitting callback preference:", preference);
+
+    //     try {
+    //         if (preference !== "Yes" && preference !== "No") {
+    //             console.error("Invalid preference:", preference);
+    //             return;
+    //         }
+
+    //         // ✅ Immediately clear old options
+    //         setOptions([]);
+
+    //         const response = await submitCallbackPreference(userId, preference);
+
+    //         if (response?.data?.message) {
+    //             setConversation(prev => [
+    //                 ...prev,
+    //                 { text: response.data.message, isBot: true }
+    //             ]);
+
+    //             // ✅ Ensure only backend options are used
+    //             if (response.data.options?.length) {
+    //                 setOptions(response.data.options);
+    //             } else {
+    //                 setOptions([]); // Clear options if backend doesn't send them
+    //             }
+
+    //             setCurrentStep(5); // Move to rating step
+    //         } else {
+    //             setConversation(prev => [
+    //                 ...prev,
+    //                 { text: "Error processing your request. Please try again.", isBot: true }
+    //             ]);
+    //         }
+    //     } catch (error) {
+    //         console.error("❌ Error submitting callback preference:", error);
+    //         setConversation(prev => [
+    //             ...prev,
+    //             { text: "Error submitting callback preference. Please try again later.", isBot: true }
+    //         ]);
+    //     }
+    // };
+
+
     const handleReviewSubmit = async (detail, isSatisfaction = false) => {
         let updatedReviewDetails = { ...userSatisfaction };
 
@@ -632,7 +679,8 @@ const Chatbot = () => {
                         <UserDetailsInput currentStep={currentStep} handleSubmitDetails={handleSubmitDetails} />
                     )}
 
-                    {currentStep === 4 && <CallbackPreference handleSubmitCallbackPreference={handleSubmitCallbackPreference} />}
+                    {currentStep === 4 && <CallbackPreference handleSubmitCallbackPreference={handleSubmitCallbackPreference} />
+                    }
 
                     {currentStep === 5 && !isRatingDisabled && (
                         <StarRating

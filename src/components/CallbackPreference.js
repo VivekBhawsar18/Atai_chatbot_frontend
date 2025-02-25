@@ -1,15 +1,3 @@
-// import React from 'react';
-// import './CallbackPreference.css';
-
-// const CallbackPreference = ({ handleSubmitCallbackPreference }) => (
-//     <div className="callback-preference">
-//         <button onClick={() => handleSubmitCallbackPreference('Yes Please!')}>Yes</button>
-//         <button onClick={() => handleSubmitCallbackPreference('No Please!')}>No</button>
-//     </div>
-// );
-
-// export default CallbackPreference;
-
 import React, { useState } from 'react';
 import './CallbackPreference.css';
 
@@ -37,3 +25,34 @@ const CallbackPreference = ({ handleSubmitCallbackPreference }) => {
 
 export default CallbackPreference;
 
+
+// import React, { useState, useEffect } from 'react';
+// import './CallbackPreference.css';
+
+// const CallbackPreference = ({ handleSubmitCallbackPreference, options }) => {
+//     const [localOptions, setLocalOptions] = useState([]);
+
+//     useEffect(() => {
+//         // ✅ Only set options if not already selected
+//         if (options.length > 0) {
+//             setLocalOptions(options);
+//         }
+//     }, [options]);
+
+//     const handleClick = (preference) => {
+//         handleSubmitCallbackPreference(preference);
+//         setLocalOptions([]); // ✅ Hide buttons after selection
+//     };
+
+//     return (
+//         <div className="callback-preference">
+//             {localOptions.map((option, index) => (
+//                 <button key={index} onClick={() => handleClick(option)}>
+//                     {option}
+//                 </button>
+//             ))}
+//         </div>
+//     );
+// };
+
+// export default CallbackPreference;
