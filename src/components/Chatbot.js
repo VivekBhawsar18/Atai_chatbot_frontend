@@ -196,13 +196,15 @@ const Chatbot = () => {
         try {
             console.log("Selected Option:", option);
             if (option === 'Yes') {
-                await handleTerminateResponse('Y');
+                console.log("✅ Yes clicked, sending 'Y'...")
+                await handleTerminateResponse('Yes');
                 setOptions([]);
                 return;
             }
 
             if (option === 'No') {
-                await handleTerminateResponse('N');
+                console.log("✅ No clicked, sending 'N'...");
+                await handleTerminateResponse('No');
                 setOptions([]);
                 return;
             }
@@ -270,8 +272,9 @@ const Chatbot = () => {
                     setConversation((prev) => [
                         ...prev,
                         { text: response.message, isBot: true },
-                        { text: "", isBot: true, options: ["Yes", "No"] }
+                        // { text: "", isBot: true, options: ["Yes", "No"] }
                     ]);
+                    setOptions(prevOptions => prevOptions.filter(opt => opt !== "Yes" && opt !== "No"));
                     return;
                 }
             }
@@ -290,6 +293,51 @@ const Chatbot = () => {
             ]);
         }
     };
+
+
+    // const handleTerminateResponse = async (responseOption) => {
+    //     try {
+    //         console.log("User selected termination response:", responseOption);
+
+    //         if (!userId) {
+    //             console.error("❌ No user session found. Cannot send termination response.");
+    //             addToConversation("Session expired. Please restart the chat.", true);
+    //             return;
+    //         }
+
+    //         // ✅ Fix response formatting
+    //         const formattedResponse = responseOption === "Y" ? "Y" : "N"; // **Fix the check**
+    //         console.log("📡 Sending terminate response:", formattedResponse);
+
+    //         // ✅ Call Backend API
+    //         const apiResponse = await terminateResponse(userId, formattedResponse);
+    //         console.log("API response received:", apiResponse);
+
+    //         if (!apiResponse || apiResponse.error) {
+    //             console.error("❌ Error in terminateResponse API:", apiResponse.error);
+    //             addToConversation(apiResponse.error || "Error processing termination request. Please try again.", true);
+    //             return;
+    //         }
+
+    //         console.log("✅ Termination response processed:", apiResponse.message);
+
+    //         // ✅ Display backend message in chatbot
+    //         addToConversation(apiResponse.message, true);
+
+    //         // 🟢 Only close the chatbot if the user selects "No"
+    //         if (formattedResponse === "N") {
+    //             setTimeout(() => {
+    //                 setIsOpen(false);
+    //                 setConversation([]);
+    //                 setUserId(generateId());
+    //                 console.log("✅ Chatbot session terminated.");
+    //             }, 3000);
+    //         }
+    //     } catch (error) {
+    //         console.error("❌ Error handling terminate response:", error.message);
+    //         addToConversation("An unexpected error occurred. Please try again later.", true);
+    //     }
+    // };
 
 
     // const handleTerminateResponse = async (responseOption) => {
@@ -336,6 +384,7 @@ const Chatbot = () => {
     //     }
     // };
 
+
     const handleTerminateResponse = async (responseOption) => {
         try {
             console.log("User selected termination response:", responseOption);
@@ -371,6 +420,9 @@ const Chatbot = () => {
                     setUserId(generateId());
                     console.log("✅ Chatbot session terminated.");
                 }, 3000);
+
+            } else {
+                console.log("✅ User wants to continue chatting. Keeping chatbot open...");
             }
         } catch (error) {
             console.error("❌ Error handling terminate response:", error.message);
@@ -459,82 +511,50 @@ const Chatbot = () => {
         setUserDetails(updatedDetails);
     };
 
+
+
     const handleSubmitCallbackPreference = async (preference) => {
-        console.log("Submitting preference:", preference); // Debug API request
+        console.log("Submitting callback preference:", preference);
 
         try {
-            // Ensure chatbot processes only "Yes" or "No"
             if (preference !== "Yes" && preference !== "No") {
-                console.error("Invalid preference sent:", preference);
+                console.error("Invalid preference:", preference);
                 return;
             }
+
+            // ✅ Immediately clear old options
+            setOptions([]);
 
             const response = await submitCallbackPreference(userId, preference);
 
             if (response?.data?.message) {
-                setConversation(prev => [...prev, { text: response.data.message, isBot: true }]);
-
-                setOptions([]);
                 setConversation(prev => [
                     ...prev,
-                    { text: "Please rate your experience with us.", isBot: true }
+                    { text: response.data.message, isBot: true }
                 ]);
-                setCurrentStep(5); // Show rating UI
 
+                // ✅ Ensure only backend options are used
+                if (response.data.options?.length) {
+                    setOptions(response.data.options);
+                } else {
+                    setOptions([]); // Clear options if backend doesn't send them
+                }
+
+                setCurrentStep(5); // Move to rating step
             } else {
-                setConversation(prev => [...prev, { text: "Error submitting callback preference. Please try again.", isBot: true }]);
+                setConversation(prev => [
+                    ...prev,
+                    { text: "Error processing your request. Please try again.", isBot: true }
+                ]);
             }
         } catch (error) {
-            console.error("Error submitting callback preference:", error);
-            setConversation((prev) => [
+            console.error("❌ Error submitting callback preference:", error);
+            setConversation(prev => [
                 ...prev,
                 { text: "Error submitting callback preference. Please try again later.", isBot: true }
             ]);
         }
     };
-
-    // const handleSubmitCallbackPreference = async (preference) => {
-    //     console.log("Submitting callback preference:", preference);
-
-    //     try {
-    //         if (preference !== "Yes" && preference !== "No") {
-    //             console.error("Invalid preference:", preference);
-    //             return;
-    //         }
-
-    //         // ✅ Immediately clear old options
-    //         setOptions([]);
-
-    //         const response = await submitCallbackPreference(userId, preference);
-
-    //         if (response?.data?.message) {
-    //             setConversation(prev => [
-    //                 ...prev,
-    //                 { text: response.data.message, isBot: true }
-    //             ]);
-
-    //             // ✅ Ensure only backend options are used
-    //             if (response.data.options?.length) {
-    //                 setOptions(response.data.options);
-    //             } else {
-    //                 setOptions([]); // Clear options if backend doesn't send them
-    //             }
-
-    //             setCurrentStep(5); // Move to rating step
-    //         } else {
-    //             setConversation(prev => [
-    //                 ...prev,
-    //                 { text: "Error processing your request. Please try again.", isBot: true }
-    //             ]);
-    //         }
-    //     } catch (error) {
-    //         console.error("❌ Error submitting callback preference:", error);
-    //         setConversation(prev => [
-    //             ...prev,
-    //             { text: "Error submitting callback preference. Please try again later.", isBot: true }
-    //         ]);
-    //     }
-    // };
 
 
     const handleReviewSubmit = async (detail, isSatisfaction = false) => {

@@ -1,7 +1,7 @@
 import './App.css';
 import Chatbot from './components/Chatbot';
 
-import background from './components/images/background.png'
+// import background from './components/images/background.png'
 
 
 
@@ -10,7 +10,7 @@ function App() {
     <div className="App">
 
       <header className="App-header">
-        <img src={background} alt="Chatbot Demo" height={"100%"} width={"100%"} />
+        {/* <img src={background} alt="Chatbot Demo" height={"100%"} width={"100%"} /> */}
       </header>
       <Chatbot />
 
