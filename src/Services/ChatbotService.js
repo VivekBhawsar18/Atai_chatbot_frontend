@@ -140,21 +140,49 @@ export const terminateChat = async (userId) => {
     }
 };
 
-// Function to handle the terminate response
+// // Function to handle the terminate response
+// export const terminateResponse = async (userId, responseOption) => {
+//     try {
+//         if (!userId) throw new Error("❌ User ID is required for termination response.");
+//         console.log(`📡 Sending Termination Response for User: ${userId} - Response: ${responseOption}`);
+
+
+//         if (responseOption.toUpperCase() === "N") {
+//             console.log(" User selected 'No' - terminating chatbot without API call.");
+//             return { message: "Thank you for your time. Have a great day!" };
+//         }
+
+//         const response = await axios.post(`${apiBaseURL}/chatbot/terminate_response`,
+//             { user_id: userId, response: responseOption.toUpperCase() },  // Force uppercase
+//             { headers: { 'Content-Type': 'application/json' } }  // Ensure JSON format
+//         );
+//         console.log("✅ Terminate Response API:", response);
+//         return response;
+//     } catch (error) {
+//         console.error("❌ Error sending terminate response:", error.response?.data || error.message);
+//         return { error: error.response?.data || error.message };
+//     }
+// };
+
+
 export const terminateResponse = async (userId, responseOption) => {
     try {
-        if (!userId) throw new Error("❌ User ID is required for termination response.");
-        console.log(`📡 Sending Termination Response for User: ${userId} - Response: ${responseOption}`);
-
-
-        if (responseOption.toUpperCase() === "N") {
-            console.log(" User selected 'No' - terminating chatbot without API call.");
-            return { message: "Thank you for your time. Have a great day!" };
+        // Check if required values are missing
+        if (!userId || !responseOption) {
+            throw new Error("❌ Missing required parameters: userId or responseOption.");
         }
 
-        const response = await axios.post(`${apiBaseURL}/chatbot/terminate_response`, { user_id: userId, response: responseOption }, axiosConfig);
-        console.log("✅ Terminate Response API:", response.data);
-        return response;
+        console.log("📡 Sending terminateResponse request:", { user_id: userId, response: responseOption });
+
+        // Ensure JSON format and correct headers
+        const apiResponse = await axios.post(
+            `${apiBaseURL}/chatbot/terminate_response`,
+            { user_id: userId, response: responseOption.toUpperCase() }, // Ensure uppercase response
+            { headers: { 'Content-Type': 'application/json' } } // Force JSON format
+        );
+
+        console.log("✅ Terminate Response API Success:", apiResponse.data);
+        return apiResponse;
     } catch (error) {
         console.error("❌ Error sending terminate response:", error.response?.data || error.message);
         return { error: error.response?.data || error.message };

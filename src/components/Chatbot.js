@@ -159,39 +159,19 @@ const Chatbot = () => {
                 return; // 🚨 Prevents automatic chat termination
             }
 
-            // 🟢 If no message from API, force termination
-            addToConversation("Error processing termination request. Please try again.", true);
-            setTimeout(() => {
-                setIsOpen(false);
-                setConversation([]);
-                setUserId(generateId());
-                console.log("✅ Chatbot session forcefully terminated.");
-            }, 3000);
+            // // 🟢 If no message from API, force termination
+            // addToConversation("Error processing termination request. Please try again.", true);
+            // setTimeout(() => {
+            //     setIsOpen(false);
+            //     setConversation([]);
+            //     setUserId(generateId());
+            //     console.log("✅ Chatbot session forcefully terminated.");
+            // }, 3000);
         } catch (error) {
             console.error("❌ Error during termination:", error);
             addToConversation("Error terminating the conversation. Please try again later.", true);
         }
     };
-
-    // const restartChat = async () => {
-    //     console.log("🔄 Restarting Chatbot...");
-
-    //     // Reset chatbot state completely
-    //     setConversation([]);
-    //     setOptions([]);
-    //     setDisabledOptions(new Set());
-    //     setUserDetails({ name: '', number: '', email: '' });
-    //     setUserSatisfaction({ review: '', satisfactionLevel: 0 });
-    //     setCurrentStep(0);
-    //     setCurrentSliderValue(5);
-    //     setIsQueryDisabled(false);
-    //     setIsRatingDisabled(false);
-    //     setCurrentQuery('');
-    //     setUserId(generateId()); // Generate a new user session
-
-
-    // };
-
 
 
     // const handleOptionClick = async (option) => {
@@ -348,7 +328,14 @@ const Chatbot = () => {
 
             if (lastBotMessage.includes("Why are you leaving so soon")) {
                 console.log(`✅ "${option}" is a termination response. Calling handleTerminateResponse().`);
-                await handleTerminateResponse(option === "Yes" ? "Y" : "N");
+
+                // ✅ Fix: Prevent automatic sending of "No"
+                if (option !== "Yes" && option !== "No") {
+                    console.log("❌ Invalid termination response. Ignoring.");
+                    return;
+                }
+
+                await handleTerminateResponse(userId, option === "Yes" ? "Y" : "N");
                 return;
             }
 
@@ -460,201 +447,105 @@ const Chatbot = () => {
         }
     };
 
+
+
     // const handleTerminateResponse = async (responseOption) => {
     //     try {
     //         console.log("🔥 handleTerminateResponse called with:", responseOption);
 
+    //         if (!userId) {
+    //             console.error("❌ No user ID found. Cannot process termination response.");
+    //             setConversation((prev) => [...prev, { text: "Session expired. Please restart the chat.", isBot: true }]);
+    //             return;
+    //         }
+
     //         const formattedResponse = responseOption.toUpperCase();
     //         console.log("✅ Formatted Response:", formattedResponse);
 
-    //         const apiResponse = await terminateResponse(userId, formattedResponse);
+    //         if (formattedResponse === "N") {
+    //             console.log("🚪 Closing chatbot...");
+    //             setConversation((prev) => [...prev, { text: "Thank you for your time. Have a great day! 😊", isBot: true }]);
 
+    //             setTimeout(() => {
+    //                 setIsOpen(false);
+    //                 setConversation([]);
+    //                 console.log("✅ Chatbot session terminated.");
+    //             }, 3000);
+    //             return;
+    //         }
+
+    //         console.log("📡 Calling terminateResponse API...");
+    //         const apiResponse = await terminateResponse(userId, formattedResponse);
     //         console.log("✅ Terminate Response API Response:", apiResponse);
 
     //         if (!apiResponse || apiResponse.error) {
     //             console.error("❌ Error in terminateResponse API:", apiResponse?.error);
-    //             setConversation((prev) => [
-    //                 ...prev,
-    //                 { text: "Error processing termination request. Please try again.", isBot: true }
-    //             ]);
-
+    //             setConversation((prev) => [...prev, { text: "Error processing termination request. Please try again.", isBot: true }]);
     //             return;
     //         }
 
-    //         setConversation((prev) => [
-    //             ...prev,
-    //             { text: responseOption, isBot: false, isUser: true },
-    //             { text: apiResponse.data.message, isBot: true }
-    //         ]);
+    //         const message = apiResponse.data?.message || "No response received from server.";
+    //         setConversation((prev) => [...prev, { text: responseOption, isBot: false, isUser: true }, { text: message, isBot: true }]);
 
-    //         if (formattedResponse === "N") {
-    //             console.log("🚪 Closing chatbot...");
-    //             setTimeout(() => {
-    //                 setIsOpen(false);
-    //                 setConversation([]);
-    //                 setUserId(generateId());
-    //                 console.log("✅ Chatbot session terminated.");
-    //             }, 3000);
-    //         } else if (formattedResponse === "Y") {
+    //         if (formattedResponse === "Y") {
     //             console.log("🔄 Reconnecting user...");
-    //             // setConversation((prev) => [
-    //             //     ...prev,
-
-    //             //     { text: apiResponse.message, isBot: true }
-    //             // ]);
-
-    //             setOptions([]);
+    //             setOptions([]); // Remove options
     //         }
-
     //     } catch (error) {
     //         console.error("❌ Error handling terminate response:", error.message);
-    //         setConversation((prev) => [
-    //             ...prev,
-    //             { text: "Unexpected error. Please try again later.", isBot: true }
-    //         ]);
+    //         setConversation((prev) => [...prev, { text: "Unexpected error. Please try again later.", isBot: true }]);
     //     }
     // };
 
 
-    const handleTerminateResponse = async (responseOption) => {
+
+    const handleTerminateResponse = async (userId, responseOption) => {
         try {
-            console.log("🔥 handleTerminateResponse called with:", responseOption);
+            console.log("🔥 handleTerminateResponse called with:", { userId, responseOption });
 
-            const formattedResponse = responseOption.toUpperCase();
-            console.log("✅ Formatted Response:", formattedResponse);
-
-            if (formattedResponse === "N") {
-                console.log("🚪 Closing chatbot...");
-
-                // ✅ Show "Thank you" message before closing
-                setConversation((prev) => [
-                    ...prev,
-                    { text: "Thank you for your time. Have a great day! 😊", isBot: true }
-                ]);
-
-                setTimeout(() => {
-                    setIsOpen(false); // Close chatbot after 3 seconds
-                    console.log("✅ Chatbot session terminated.");
-                }, 3000);
-
-                return; // 🚨 Stop execution here, don’t call the API
-            }
-
-            // 🚀 Continue with API call if "Yes"
-            const apiResponse = await terminateResponse(userId, formattedResponse);
-            console.log("✅ Terminate Response API Response:", apiResponse);
-
-            if (!apiResponse || apiResponse.error) {
-                console.error("❌ Error in terminateResponse API:", apiResponse?.error);
-                setConversation((prev) => [
-                    ...prev,
-                    { text: "Error processing termination request. Please try again.", isBot: true }
-                ]);
+            if (!userId) {
+                console.error("❌ No user ID found. Cannot process termination response.");
                 return;
             }
 
-            setConversation((prev) => [
-                ...prev,
-                { text: responseOption, isBot: false, isUser: true },
-                { text: apiResponse.data.message, isBot: true }
-            ]);
+            if (!responseOption) {
+                console.error("❌ No response option provided.");
+                return;
+            }
 
-            if (formattedResponse === "Y") {
-                console.log("🔄 Reconnecting user...");
-                setOptions([]); // Remove options
+            console.log("📡 Sending terminateResponse request with:", responseOption);
+
+            const apiResponse = await terminateResponse(userId, responseOption.toUpperCase());
+
+            if (!apiResponse || apiResponse.error) {
+                console.error("❌ Error in terminateResponse API:", apiResponse?.error);
+                return;
+            }
+
+            // ✅ Dynamically display the API response message
+            const responseMessage = apiResponse.data?.message || "No response received from server.";
+            setConversation((prev) => [...prev, { text: responseMessage, isBot: true }]);
+
+            // ✅ If "No" was selected, properly display termination message and close chatbot
+            if (responseOption.toUpperCase() === "N") {
+                console.log("🚪 User selected 'No' - Closing chatbot after displaying message.");
+                setTimeout(() => {
+                    setIsOpen(false);
+                }, 2000);
+                return; // ✅ Prevent moving to `handleChat`
+            }
+
+            // ✅ If "Yes" was selected, just remove options to stop interaction
+            if (responseOption.toUpperCase() === "Y") {
+                console.log("🔄 Reconnecting user... Waiting for further input.");
+                setOptions([]);  // Remove options and stop further automatic messages
             }
 
         } catch (error) {
             console.error("❌ Error handling terminate response:", error.message);
-            setConversation((prev) => [
-                ...prev,
-                { text: "Unexpected error. Please try again later.", isBot: true }
-            ]);
         }
     };
 
-
-
-    // const handleTerminateResponse = async (responseOption) => {
-    //     try {
-    //         console.log("User selected termination response:", responseOption);
-
-    //         const formattedResponse = responseOption.toUpperCase() === "Y" ? "Y" : responseOption.toUpperCase() === "N" ? "N" : responseOption.toUpperCase();
-
-    //         const apiResponse = await terminateResponse(userId, formattedResponse);
-
-    //         if (!apiResponse || apiResponse.error) {
-    //             console.error("❌ Error in terminateResponse API:", apiResponse.error);
-    //             addToConversation(apiResponse.error || "Error processing termination request. Please try again.", true);
-    //             return;
-    //         }
-
-    //         console.log("✅ Termination response processed:", apiResponse.data);
-    //         addToConversation(formattedResponse, false);
-    //         addToConversation(apiResponse.data.message, true);
-
-    //         if (formattedResponse === "N") {
-    //             setTimeout(() => {
-    //                 setIsOpen(false);
-    //                 setConversation([]);
-    //                 setUserId(generateId());
-    //                 console.log("✅ Chatbot session terminated.");
-    //             }, 3000);
-    //         } else if (formattedResponse === "Y") {
-    //             // Allow continuation of the chat if the user wants to stay
-    //             console.log("✅ User wants to continue chatting. Keeping chatbot open...");
-    //         }
-    //     } catch (error) {
-    //         console.error("❌ Error handling terminate response:", error.message);
-    //         addToConversation("An unexpected error occurred. Please try again later.", true);
-    //     }
-    // };
-
-
-    // const handleTerminateResponse = async (responseOption) => {
-    //     try {
-    //         console.log("User selected termination response:", responseOption);
-
-    //         if (!userId) {
-    //             console.error("❌ No user session found. Cannot send termination response.");
-    //             addToConversation("Session expired. Please restart the chat.", true);
-    //             return;
-    //         }
-
-    //         // ✅ Convert "Yes" → "Y", "No" → "N"
-    //         const formattedResponse = responseOption.toUpperCase() === "YES" ? "Y" : "N";
-    //         console.log("📡 Sending terminate response:", formattedResponse);
-
-    //         const apiResponse = await terminateResponse(userId, formattedResponse);
-
-    //         if (!apiResponse || apiResponse.error) {
-    //             console.error("❌ Error in terminateResponse API:", apiResponse.error);
-    //             addToConversation(apiResponse.error || "Error processing termination request. Please try again.", true);
-    //             return;
-    //         }
-
-    //         console.log("✅ Termination response processed:", apiResponse.data);
-
-    //         addToConversation(responseOption, false);
-    //         addToConversation(apiResponse.data.message, true);
-
-    //         // 🟢 Only close the chat if the user selects "No"
-    //         if (formattedResponse === "N") {
-    //             setTimeout(() => {
-    //                 setIsOpen(false);
-    //                 setConversation([]);
-    //                 setUserId(generateId());
-    //                 console.log("✅ Chatbot session terminated.");
-    //             }, 3000);
-
-    //         } else {
-    //             console.log("✅ User wants to continue chatting. Keeping chatbot open...");
-    //         }
-    //     } catch (error) {
-    //         console.error("❌ Error handling terminate response:", error.message);
-    //         addToConversation("An unexpected error occurred. Please try again later.", true);
-    //     }
-    // };
 
 
     const handleSubmitDetails = async (detail) => {
