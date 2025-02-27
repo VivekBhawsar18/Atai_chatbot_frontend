@@ -2,12 +2,14 @@ import axios from 'axios';
 
 
 const apiBaseURL = 'https://chatbot-api-b1jc.onrender.com';
+
 // const apiBaseURL = 'http://127.0.0.1:5000';
 
 // Axios configuration for default headers
 const axiosConfig = {
     headers: {
         'Content-Type': 'application/json',
+        timeout: 1000,
     },
 
 };
@@ -15,6 +17,11 @@ const axiosConfig = {
 // Function to initialize the conversation recording
 export const initRecordingConversation = async (userId) => {
     try {
+
+        // if (!userId) throw new Error("❌ User ID is required to start recording.");
+
+        // console.log("📡 Sending request to initRecordingConversation:", { user_id: userId });
+
 
         const response = await axios.post(`${apiBaseURL}/chatbot/init_recording_conversation`, { user_id: userId }, axiosConfig);
         console.log("✅ Recording initialized:", response);
@@ -122,9 +129,10 @@ export const submitSatisfaction = async (userId, satisfaction) => {
 
 // Function to terminate the chat
 export const terminateChat = async (userId) => {
-
+    console.log("📡 Calling terminateChat API for user:", userId);
     try {
         const response = await axios.post(`${apiBaseURL}/chatbot/terminate`, { user_id: userId }, axiosConfig);
+        console.log("✅ Terminate Chat API Response:", response);
         return response;
     } catch (error) {
         console.error('❌ Error terminating chat:', error.response?.data || error.message);
@@ -136,7 +144,13 @@ export const terminateChat = async (userId) => {
 export const terminateResponse = async (userId, responseOption) => {
     try {
         if (!userId) throw new Error("❌ User ID is required for termination response.");
+        console.log(`📡 Sending Termination Response for User: ${userId} - Response: ${responseOption}`);
 
+
+        if (responseOption.toUpperCase() === "N") {
+            console.log(" User selected 'No' - terminating chatbot without API call.");
+            return { message: "Thank you for your time. Have a great day!" };
+        }
 
         const response = await axios.post(`${apiBaseURL}/chatbot/terminate_response`, { user_id: userId, response: responseOption }, axiosConfig);
         console.log("✅ Terminate Response API:", response.data);

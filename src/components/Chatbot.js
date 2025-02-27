@@ -139,6 +139,8 @@ const Chatbot = () => {
         }
     };
 
+
+
     // const minimizeChatbot = () => {
     //     setIsMinimized(true);
     //     setIsOpen(false);
@@ -192,24 +194,177 @@ const Chatbot = () => {
 
 
 
+    // const handleOptionClick = async (option) => {
+    //     try {
+    //         console.log("Selected Option:", option);
+    //         //Handle callback preference options
+    //         if (currentStep === 4) {
+    //             await handleSubmitCallbackPreference(option);
+    //             return;
+    //         }
+
+
+    //         // Handle termination options
+    //         // if (option === 'Y' || option === 'N') {
+    //         //     await handleTerminateResponse(option);
+    //         //     return;
+    //         // }
+
+
+    //         if (option === 'Yes' || option === 'No') {
+    //             console.log(`✅ ${option} clicked, sending ${option === 'Yes' ? 'Y' : 'N'}`);
+    //             await handleTerminateResponse(option);
+    //             setOptions([]);
+    //             return;
+    //         }
+
+    //         if (option === 'Yes') {
+    //             console.log("✅ Yes clicked, sending 'Y'...")
+    //             await handleTerminateResponse('Yes');
+    //             setOptions([]);
+    //             return;
+    //         }
+
+    //         if (option === 'No') {
+    //             console.log("✅ No clicked, sending 'N'...");
+    //             await handleTerminateResponse('No');
+    //             setOptions([]);
+    //             return;
+    //         }
+
+
+    //         setIsTyping(true);
+    //         const response = await sendMessage(userId, option.trim());
+    //         setIsTyping(false);
+    //         console.log("🔥 API Response:", response);
+
+    //         if (response.error) {
+    //             console.error("❌ Server Error:", response.error);
+    //             setConversation((prev) => [
+    //                 ...prev,
+    //                 { text: "Invalid choice. Please select a valid option.", isBot: true }
+    //             ]);
+    //             return;
+    //         }
+
+    //         setOptions([]);
+    //         // await new Promise(resolve => setTimeout(resolve, 50));
+
+    //         if (option === "Our Services" && response.options?.length > 0) {
+    //             setOptions(response.options);
+    //             setConversation((prev) => [
+    //                 ...prev,
+    //                 { text: "Here are our services:", isBot: true, options: response.options },
+    //                 // { text: "Please select a service:", isBot: true, options: response.options }
+    //             ]);
+    //             return;
+    //         }
+
+    //         if (option === "Book A Demo") {
+    //             setConversation((prev) => [
+    //                 ...prev,
+    //                 { text: "Kindly provide your details to help us provide you the best service:", isBot: true },
+    //                 { text: "Please provide your name.", isBot: true }
+    //             ]);
+
+    //             setCurrentStep(1);
+    //             return;
+    //         }
+
+    //         if (response.message) {
+    //             if (response.message.includes("When do you wish to start")) {
+    //                 setConversation((prev) => [
+    //                     ...prev,
+    //                     { text: response.message, isBot: true, options: response.options || [] }
+    //                 ]);
+    //                 setOptions(response.options);
+    //                 return;
+    //             }
+
+    //             if (response.message.includes("provide your details")) {
+    //                 setConversation((prev) => [
+    //                     ...prev,
+    //                     { text: response.message, isBot: true },
+    //                     { text: "Please provide your name.", isBot: true }
+    //                 ]);
+    //                 setCurrentStep(1);
+    //                 return;
+    //             }
+
+    //             // if (response.message.includes("Request a Call Back")) {
+    //             //     setConversation((prev) => [
+    //             //         ...prev,
+    //             //         { text: response.message, isBot: true },
+    //             //         // { text: "", isBot: true, options: ["Yes", "No"] }
+    //             //     ]);
+    //             //     setOptions(prevOptions => prevOptions.filter(opt => opt !== "Yes" && opt !== "No"));
+    //             //     return;
+    //             // }
+
+    //             if (response.message.includes("Request a Call Back")) {
+    //                 addToConversation(response.message, true);
+    //                 setOptions(["Yes", "No"]);  // Ensure only callback options are set
+    //                 setCurrentStep(4);  // Move to the callback preference step
+    //                 return;
+    //             }
+    //         }
+
+    //         setConversation((prev) => [
+    //             ...prev,
+    //             { text: response.message, isBot: true, options: response.options || [] }
+    //         ]);
+
+    //     } catch (error) {
+    //         setIsTyping(false);
+    //         console.error("❌ Error handling option:", error);
+    //         setConversation((prev) => [
+    //             ...prev,
+    //             { text: "An unexpected error occurred. Please try again later.", isBot: true }
+    //         ]);
+    //     }
+    // };
+
     const handleOptionClick = async (option) => {
         try {
             console.log("Selected Option:", option);
-            if (option === 'Yes') {
-                console.log("✅ Yes clicked, sending 'Y'...")
-                await handleTerminateResponse('Yes');
-                setOptions([]);
+
+
+            // Handle termination options specifically
+            // if ((option === 'Y' || option === 'N') && currentStep === 'terminate') {
+            //     await handleTerminateResponse(option);
+            //     return;
+            // }
+
+            // ✅ Ensure termination options call the terminate response API
+
+            // if (currentStep === 'terminate' && (option === 'Yes' || option === 'No')) {
+            //     console.log(` ${option} clicked. Calling terminateResponse.`);
+            //     await handleTerminateResponse(option === 'Yes' ? 'Y' : 'N');
+            //     return; // 🚨 Prevents `sendMessage()` from running!
+            // }
+
+            // ✅ Check if the last message was the termination prompt
+            const lastBotMessage = conversation.length > 0 ? conversation[conversation.length - 1].text : "";
+
+            if (lastBotMessage.includes("Why are you leaving so soon")) {
+                console.log(`✅ "${option}" is a termination response. Calling handleTerminateResponse().`);
+                await handleTerminateResponse(option === "Yes" ? "Y" : "N");
                 return;
             }
 
-            if (option === 'No') {
-                console.log("✅ No clicked, sending 'N'...");
-                await handleTerminateResponse('No');
-                setOptions([]);
+            if (currentStep === 4) {
+                // Handle callback preference options
+                await handleSubmitCallbackPreference(option);
                 return;
             }
 
+            // ✅ Update conversation with user selection
+            setConversation((prev) => [
+                ...prev,
+                { text: option, isBot: false, isUser: true }
+            ]);
 
+            // Handle other options
             setIsTyping(true);
             const response = await sendMessage(userId, option.trim());
             setIsTyping(false);
@@ -219,20 +374,18 @@ const Chatbot = () => {
                 console.error("❌ Server Error:", response.error);
                 setConversation((prev) => [
                     ...prev,
-                    { text: "Invalid choice. Please select a valid option.", isBot: true, options: [] }
+                    { text: "Invalid choice. Please select a valid option.", isBot: true }
                 ]);
                 return;
             }
 
             setOptions([]);
-            await new Promise(resolve => setTimeout(resolve, 50));
 
             if (option === "Our Services" && response.options?.length > 0) {
                 setOptions(response.options);
                 setConversation((prev) => [
                     ...prev,
-                    { text: "Here are our services:", isBot: true },
-                    { text: "Please select a service:", isBot: true, options: response.options }
+                    { text: "Here are our services:", isBot: true, options: response.options }
                 ]);
                 return;
             }
@@ -243,8 +396,6 @@ const Chatbot = () => {
                     { text: "Kindly provide your details to help us provide you the best service:", isBot: true },
                     { text: "Please provide your name.", isBot: true }
                 ]);
-
-                setCurrentStep(1);
                 return;
             }
 
@@ -258,12 +409,14 @@ const Chatbot = () => {
                     return;
                 }
 
+
                 if (response.message.includes("provide your details")) {
                     setConversation((prev) => [
                         ...prev,
                         { text: response.message, isBot: true },
                         { text: "Please provide your name.", isBot: true }
                     ]);
+
                     setCurrentStep(1);
                     return;
                 }
@@ -271,19 +424,32 @@ const Chatbot = () => {
                 if (response.message.includes("Request a Call Back")) {
                     setConversation((prev) => [
                         ...prev,
-                        { text: response.message, isBot: true },
-                        // { text: "", isBot: true, options: ["Yes", "No"] }
+                        { text: response.message, isBot: true }
                     ]);
-                    setOptions(prevOptions => prevOptions.filter(opt => opt !== "Yes" && opt !== "No"));
+                    setOptions(["Yes", "No"]);  // Ensure only callback options are set
+                    setCurrentStep(4);  // Move to the callback preference step
                     return;
                 }
+
+                // ✅ Fix: Properly Detect Termination Message
+                if (response.message.includes("Why are you leaving so soon")) {
+                    console.log("🔄 Entering termination step...");
+                    setConversation((prev) => [
+                        ...prev,
+                        { text: response.message, isBot: true }
+                    ]);
+
+                    setOptions(["Yes", "No"]);
+
+                    return;
+                }
+
+
+                setConversation((prev) => [
+                    ...prev,
+                    { text: response.message, isBot: true, options: response.options || [] }
+                ]);
             }
-
-            setConversation((prev) => [
-                ...prev,
-                { text: response.message, isBot: true, options: response.options || [] }
-            ]);
-
         } catch (error) {
             setIsTyping(false);
             console.error("❌ Error handling option:", error);
@@ -294,24 +460,128 @@ const Chatbot = () => {
         }
     };
 
+    // const handleTerminateResponse = async (responseOption) => {
+    //     try {
+    //         console.log("🔥 handleTerminateResponse called with:", responseOption);
+
+    //         const formattedResponse = responseOption.toUpperCase();
+    //         console.log("✅ Formatted Response:", formattedResponse);
+
+    //         const apiResponse = await terminateResponse(userId, formattedResponse);
+
+    //         console.log("✅ Terminate Response API Response:", apiResponse);
+
+    //         if (!apiResponse || apiResponse.error) {
+    //             console.error("❌ Error in terminateResponse API:", apiResponse?.error);
+    //             setConversation((prev) => [
+    //                 ...prev,
+    //                 { text: "Error processing termination request. Please try again.", isBot: true }
+    //             ]);
+
+    //             return;
+    //         }
+
+    //         setConversation((prev) => [
+    //             ...prev,
+    //             { text: responseOption, isBot: false, isUser: true },
+    //             { text: apiResponse.data.message, isBot: true }
+    //         ]);
+
+    //         if (formattedResponse === "N") {
+    //             console.log("🚪 Closing chatbot...");
+    //             setTimeout(() => {
+    //                 setIsOpen(false);
+    //                 setConversation([]);
+    //                 setUserId(generateId());
+    //                 console.log("✅ Chatbot session terminated.");
+    //             }, 3000);
+    //         } else if (formattedResponse === "Y") {
+    //             console.log("🔄 Reconnecting user...");
+    //             // setConversation((prev) => [
+    //             //     ...prev,
+
+    //             //     { text: apiResponse.message, isBot: true }
+    //             // ]);
+
+    //             setOptions([]);
+    //         }
+
+    //     } catch (error) {
+    //         console.error("❌ Error handling terminate response:", error.message);
+    //         setConversation((prev) => [
+    //             ...prev,
+    //             { text: "Unexpected error. Please try again later.", isBot: true }
+    //         ]);
+    //     }
+    // };
+
+
+    const handleTerminateResponse = async (responseOption) => {
+        try {
+            console.log("🔥 handleTerminateResponse called with:", responseOption);
+
+            const formattedResponse = responseOption.toUpperCase();
+            console.log("✅ Formatted Response:", formattedResponse);
+
+            if (formattedResponse === "N") {
+                console.log("🚪 Closing chatbot...");
+
+                // ✅ Show "Thank you" message before closing
+                setConversation((prev) => [
+                    ...prev,
+                    { text: "Thank you for your time. Have a great day! 😊", isBot: true }
+                ]);
+
+                setTimeout(() => {
+                    setIsOpen(false); // Close chatbot after 3 seconds
+                    console.log("✅ Chatbot session terminated.");
+                }, 3000);
+
+                return; // 🚨 Stop execution here, don’t call the API
+            }
+
+            // 🚀 Continue with API call if "Yes"
+            const apiResponse = await terminateResponse(userId, formattedResponse);
+            console.log("✅ Terminate Response API Response:", apiResponse);
+
+            if (!apiResponse || apiResponse.error) {
+                console.error("❌ Error in terminateResponse API:", apiResponse?.error);
+                setConversation((prev) => [
+                    ...prev,
+                    { text: "Error processing termination request. Please try again.", isBot: true }
+                ]);
+                return;
+            }
+
+            setConversation((prev) => [
+                ...prev,
+                { text: responseOption, isBot: false, isUser: true },
+                { text: apiResponse.data.message, isBot: true }
+            ]);
+
+            if (formattedResponse === "Y") {
+                console.log("🔄 Reconnecting user...");
+                setOptions([]); // Remove options
+            }
+
+        } catch (error) {
+            console.error("❌ Error handling terminate response:", error.message);
+            setConversation((prev) => [
+                ...prev,
+                { text: "Unexpected error. Please try again later.", isBot: true }
+            ]);
+        }
+    };
+
+
 
     // const handleTerminateResponse = async (responseOption) => {
     //     try {
     //         console.log("User selected termination response:", responseOption);
 
-    //         if (!userId) {
-    //             console.error("❌ No user session found. Cannot send termination response.");
-    //             addToConversation("Session expired. Please restart the chat.", true);
-    //             return;
-    //         }
+    //         const formattedResponse = responseOption.toUpperCase() === "Y" ? "Y" : responseOption.toUpperCase() === "N" ? "N" : responseOption.toUpperCase();
 
-    //         // ✅ Fix response formatting
-    //         const formattedResponse = responseOption === "Y" ? "Y" : "N"; // **Fix the check**
-    //         console.log("📡 Sending terminate response:", formattedResponse);
-
-    //         // ✅ Call Backend API
     //         const apiResponse = await terminateResponse(userId, formattedResponse);
-    //         console.log("API response received:", apiResponse);
 
     //         if (!apiResponse || apiResponse.error) {
     //             console.error("❌ Error in terminateResponse API:", apiResponse.error);
@@ -319,12 +589,10 @@ const Chatbot = () => {
     //             return;
     //         }
 
-    //         console.log("✅ Termination response processed:", apiResponse.message);
+    //         console.log("✅ Termination response processed:", apiResponse.data);
+    //         addToConversation(formattedResponse, false);
+    //         addToConversation(apiResponse.data.message, true);
 
-    //         // ✅ Display backend message in chatbot
-    //         addToConversation(apiResponse.message, true);
-
-    //         // 🟢 Only close the chatbot if the user selects "No"
     //         if (formattedResponse === "N") {
     //             setTimeout(() => {
     //                 setIsOpen(false);
@@ -332,6 +600,9 @@ const Chatbot = () => {
     //                 setUserId(generateId());
     //                 console.log("✅ Chatbot session terminated.");
     //             }, 3000);
+    //         } else if (formattedResponse === "Y") {
+    //             // Allow continuation of the chat if the user wants to stay
+    //             console.log("✅ User wants to continue chatting. Keeping chatbot open...");
     //         }
     //     } catch (error) {
     //         console.error("❌ Error handling terminate response:", error.message);
@@ -346,89 +617,44 @@ const Chatbot = () => {
 
     //         if (!userId) {
     //             console.error("❌ No user session found. Cannot send termination response.");
+    //             addToConversation("Session expired. Please restart the chat.", true);
     //             return;
     //         }
 
-    //         // Send "Yes" or "No" to the backend
-    //         const apiResponse = await terminateResponse(userId, responseOption);
+    //         // ✅ Convert "Yes" → "Y", "No" → "N"
+    //         const formattedResponse = responseOption.toUpperCase() === "YES" ? "Y" : "N";
+    //         console.log("📡 Sending terminate response:", formattedResponse);
 
-    //         if (!apiResponse || !apiResponse.data) {
-    //             throw new Error("No response from server.");
+    //         const apiResponse = await terminateResponse(userId, formattedResponse);
+
+    //         if (!apiResponse || apiResponse.error) {
+    //             console.error("❌ Error in terminateResponse API:", apiResponse.error);
+    //             addToConversation(apiResponse.error || "Error processing termination request. Please try again.", true);
+    //             return;
     //         }
 
-    //         console.log("✅ Termination Response API:", apiResponse.data);
+    //         console.log("✅ Termination response processed:", apiResponse.data);
 
-    //         setConversation((prev) => [
-    //             ...prev,
-    //             { text: responseOption, isBot: false, isUser: true },
-    //             { text: apiResponse.data.message || "Unexpected response from server.", isBot: true }
-    //         ]);
+    //         addToConversation(responseOption, false);
+    //         addToConversation(apiResponse.data.message, true);
 
-    //         setDisabledOptions(new Set());
-
-    //         if (apiResponse.data.message.includes("Thank you for using our service") || responseOption === 'No') {
+    //         // 🟢 Only close the chat if the user selects "No"
+    //         if (formattedResponse === "N") {
     //             setTimeout(() => {
     //                 setIsOpen(false);
     //                 setConversation([]);
     //                 setUserId(generateId());
     //                 console.log("✅ Chatbot session terminated.");
     //             }, 3000);
-    //         }
 
+    //         } else {
+    //             console.log("✅ User wants to continue chatting. Keeping chatbot open...");
+    //         }
     //     } catch (error) {
-    //         console.error("❌ Error sending terminate response:", error.message);
-    //         setConversation((prev) => [
-    //             ...prev,
-    //             { text: "An unexpected error occurred. Please try again later.", isBot: true }
-    //         ]);
+    //         console.error("❌ Error handling terminate response:", error.message);
+    //         addToConversation("An unexpected error occurred. Please try again later.", true);
     //     }
     // };
-
-
-    const handleTerminateResponse = async (responseOption) => {
-        try {
-            console.log("User selected termination response:", responseOption);
-
-            if (!userId) {
-                console.error("❌ No user session found. Cannot send termination response.");
-                addToConversation("Session expired. Please restart the chat.", true);
-                return;
-            }
-
-            // ✅ Convert "Yes" → "Y", "No" → "N"
-            const formattedResponse = responseOption.toUpperCase() === "YES" ? "Y" : "N";
-            console.log("📡 Sending terminate response:", formattedResponse);
-
-            const apiResponse = await terminateResponse(userId, formattedResponse);
-
-            if (!apiResponse || apiResponse.error) {
-                console.error("❌ Error in terminateResponse API:", apiResponse.error);
-                addToConversation(apiResponse.error || "Error processing termination request. Please try again.", true);
-                return;
-            }
-
-            console.log("✅ Termination response processed:", apiResponse.data);
-
-            addToConversation(responseOption, false);
-            addToConversation(apiResponse.data.message, true);
-
-            // 🟢 Only close the chat if the user selects "No"
-            if (formattedResponse === "N") {
-                setTimeout(() => {
-                    setIsOpen(false);
-                    setConversation([]);
-                    setUserId(generateId());
-                    console.log("✅ Chatbot session terminated.");
-                }, 3000);
-
-            } else {
-                console.log("✅ User wants to continue chatting. Keeping chatbot open...");
-            }
-        } catch (error) {
-            console.error("❌ Error handling terminate response:", error.message);
-            addToConversation("An unexpected error occurred. Please try again later.", true);
-        }
-    };
 
 
     const handleSubmitDetails = async (detail) => {
@@ -512,7 +738,6 @@ const Chatbot = () => {
     };
 
 
-
     const handleSubmitCallbackPreference = async (preference) => {
         console.log("Submitting callback preference:", preference);
 
@@ -522,7 +747,6 @@ const Chatbot = () => {
                 return;
             }
 
-            // ✅ Immediately clear old options
             setOptions([]);
 
             const response = await submitCallbackPreference(userId, preference);
@@ -530,17 +754,28 @@ const Chatbot = () => {
             if (response?.data?.message) {
                 setConversation(prev => [
                     ...prev,
+                    { text: preference, isBot: false },
                     { text: response.data.message, isBot: true }
                 ]);
 
-                // ✅ Ensure only backend options are used
+                // Ensure only backend options are used
                 if (response.data.options?.length) {
                     setOptions(response.data.options);
                 } else {
-                    setOptions([]); // Clear options if backend doesn't send them
+                    setOptions([]);
                 }
 
-                setCurrentStep(5); // Move to rating step
+                // Move to rating step if "No" is clicked
+                if (preference === "No") {
+                    setConversation(prev => [
+                        ...prev.filter(msg => msg.text !== "Please give us a rating:"),
+                        { text: "Please give us a rating:", isBot: true }
+                    ]);
+                    setCurrentStep(5); // Move to rating step
+                } else if (preference === "Yes") {
+                    // Handle callback preference if "Yes" is clicked
+                    setCurrentStep(5); // Move to rating step based on backend response
+                }
             } else {
                 setConversation(prev => [
                     ...prev,
@@ -555,6 +790,56 @@ const Chatbot = () => {
             ]);
         }
     };
+
+
+    // const handleSubmitCallbackPreference = async (preference) => {
+    //     console.log("Submitting callback preference:", preference);
+
+    //     try {
+    //         if (preference !== "Yes" && preference !== "No") {
+    //             console.error("Invalid preference:", preference);
+    //             return;
+    //         }
+
+    //         setOptions([]);
+
+    //         const response = await submitCallbackPreference(userId, preference);
+
+    //         if (response?.data?.message) {
+    //             setConversation(prev => [
+    //                 ...prev,
+    //                 { text: preference, isBot: false },
+    //                 { text: response.data.message, isBot: true }
+    //             ]);
+
+    //             // Ensure only backend options are used
+    //             if (response.data.options?.length) {
+    //                 setOptions(response.data.options);
+    //             } else {
+    //                 setOptions([]);
+    //             }
+
+    //             if (preference === "No") {
+    //                 setConversation(prev => [
+    //                     ...prev,
+    //                     // { text: "Please give us a rating:", isBot: true }
+    //                 ]);
+    //                 setCurrentStep(5);
+    //             }
+    //         } else {
+    //             setConversation(prev => [
+    //                 ...prev,
+    //                 { text: "Error processing your request. Please try again.", isBot: true }
+    //             ]);
+    //         }
+    //     } catch (error) {
+    //         console.error("❌ Error submitting callback preference:", error);
+    //         setConversation(prev => [
+    //             ...prev,
+    //             { text: "Error submitting callback preference. Please try again later.", isBot: true }
+    //         ]);
+    //     }
+    // };
 
 
     const handleReviewSubmit = async (detail, isSatisfaction = false) => {
@@ -699,8 +984,10 @@ const Chatbot = () => {
                         <UserDetailsInput currentStep={currentStep} handleSubmitDetails={handleSubmitDetails} />
                     )}
 
-                    {currentStep === 4 && <CallbackPreference handleSubmitCallbackPreference={handleSubmitCallbackPreference} />
-                    }
+                    {currentStep === 4 && (<CallbackPreference
+                        options={options}
+                        handleSubmitCallbackPreference={handleSubmitCallbackPreference} />
+                    )}
 
                     {currentStep === 5 && !isRatingDisabled && (
                         <StarRating
