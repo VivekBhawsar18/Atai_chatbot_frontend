@@ -84,11 +84,7 @@ const Chatbot = () => {
     };
 
     const toggleChatbot = async () => {
-        // if (isMinimized) {
-        //     setIsMinimized(false);
-        //     setIsOpen(true);
-        //     return;
-        // }
+
 
         if (!isOpen) {
             console.log("Chatbot button clicked");
@@ -141,15 +137,18 @@ const Chatbot = () => {
 
 
 
-    // const minimizeChatbot = () => {
-    //     setIsMinimized(true);
-    //     setIsOpen(false);
-    // };
 
     const handleClose = async () => {
-        try {
-            console.log("🚪 User requested to close the chat...");
 
+        console.log("🚪 User requested to close the chat...");
+
+        console.log("Current userId before termination:", userId);
+
+        if (!userId) {
+            console.error("❌ User ID is missing! Chat termination cannot proceed.");
+            return;
+        }
+        try {
             const response = await terminateChat(userId);
             console.log("Terminate Chat Response:", response);
 
@@ -383,6 +382,7 @@ const Chatbot = () => {
                     { text: "Kindly provide your details to help us provide you the best service:", isBot: true },
                     { text: "Please provide your name.", isBot: true }
                 ]);
+                setCurrentStep(1);
                 return;
             }
 
@@ -852,6 +852,7 @@ const Chatbot = () => {
             console.error("❌ Error processing audio:", error.response?.data || error.message);
         }
     };
+
     return (
         <div className="chatbot-container">
             {!isOpen && (
