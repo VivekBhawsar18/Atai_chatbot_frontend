@@ -1,5 +1,5 @@
 import './App.css';
-import Chatbot from './components/Chatbot';
+import Chatbot from './components/Chatbot/Chatbot';
 
 // import background from './components/images/background.png'
 

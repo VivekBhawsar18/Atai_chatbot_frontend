@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ReactMediaRecorder } from "react-media-recorder";
-import { convertAudio } from "../Services/ChatbotService";
+import { convertAudio } from "../../Services/ChatbotService";
 
 const MicButton = ({ userId, setCurrentQuery }) => {
     const [isRecording, setIsRecording] = useState(false);
